@@ -1,0 +1,41 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        </div>
+
+        <article class="content px-4">
+            <AuthorizeView>
+                <Authorized>
+                    @Body
+                </Authorized>
+                <NotAuthorized>
+                    @Body
+                </NotAuthorized>
+            </AuthorizeView>
+        </article>
+    </main>
+</div>
+
+@code {
+    [CascadingParameter]
+	protected Task<AuthenticationState> authStat { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await authStat)?.User;
+
+        if (user?.Identity?.IsAuthenticated == false) // Ensuring proper null checks
+        {
+            NavigationManager.NavigateTo($"Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
+        }
+    }
+}
+

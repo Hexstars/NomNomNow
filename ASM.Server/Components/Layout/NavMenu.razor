@@ -1,0 +1,23 @@
+﻿<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <i class="bi bi-house-door-fill"></i> Home
+        </NavLink>
+        <NavLink class="nav-link" href="Categories">
+            <i class="bi bi-list"></i> Danh mục
+        </NavLink>
+        <NavLink class="nav-link" href="Products">
+            <i class="bi bi-box-seam"></i> Sản phẩm
+        </NavLink>
+    </ul>
+</div>
+@code {
+    private bool isNavMenuOpen = false;
+
+    private string NavMenuCssClass => isNavMenuOpen ? "nav-menu-open" : "nav-menu-closed";
+
+    private void ToggleNavMenu()
+    {
+        isNavMenuOpen = !isNavMenuOpen;
+    }
+}

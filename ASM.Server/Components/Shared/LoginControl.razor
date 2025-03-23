@@ -1,0 +1,15 @@
+﻿@page "/loginControl"
+@using System.Web
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+	<Authorized>
+			<b>Hello, @context.User.Identity.Name</b>
+			<a class="ml-md-auto btn btn-primary"
+				href="/logout?returnUrl=/"
+				target="_top">Logout</a>
+		</Authorized>
+		<NotAuthorized>
+			<p>You are not authorized to access this page.</p>
+		</NotAuthorized>
+</AuthorizeView>

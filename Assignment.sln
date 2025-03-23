@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35828.75
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASM.Server", "ASM.Server\ASM.Server.csproj", "{2C2B5A7D-A352-4BCE-87AA-71529EA248D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ASM.Share", "ASM.Share\ASM.Share.csproj", "{CA38C81A-4BFF-4194-9550-0382409D2BF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2C2B5A7D-A352-4BCE-87AA-71529EA248D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C2B5A7D-A352-4BCE-87AA-71529EA248D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2B5A7D-A352-4BCE-87AA-71529EA248D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C2B5A7D-A352-4BCE-87AA-71529EA248D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA38C81A-4BFF-4194-9550-0382409D2BF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA38C81A-4BFF-4194-9550-0382409D2BF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA38C81A-4BFF-4194-9550-0382409D2BF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA38C81A-4BFF-4194-9550-0382409D2BF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D4EA5A9A-5209-45C6-8C60-1D2D703F6FE5}
+	EndGlobalSection
+EndGlobal
