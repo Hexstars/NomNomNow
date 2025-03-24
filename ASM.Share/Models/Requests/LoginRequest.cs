@@ -1,4 +1,4 @@
-﻿namespace ASM.Share.Models.Request
+﻿namespace ASM.Share.Models.Requests
 {
     public class LoginRequest
     {

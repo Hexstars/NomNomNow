@@ -1,4 +1,4 @@
-﻿using ASM.Share.Models.Request;
+﻿using ASM.Share.Models.Requests;
 
 namespace ASM.Share.Models.Services
 {
@@ -14,4 +14,5 @@ namespace ASM.Share.Models.Services
         }
 
     }
+
 }
