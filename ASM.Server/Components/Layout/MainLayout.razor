@@ -30,12 +30,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var user = (await authStat)?.User;
+        // var user = (await authStat)?.User;
 
-        if (user?.Identity?.IsAuthenticated == false) // Ensuring proper null checks
-        {
-            NavigationManager.NavigateTo($"Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
-        }
+        // if (user?.Identity?.IsAuthenticated == false) // Ensuring proper null checks
+        // {
+        //     NavigationManager.NavigateTo($"Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}");
+        // }
     }
 }
 
