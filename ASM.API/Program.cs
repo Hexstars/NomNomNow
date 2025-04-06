@@ -51,6 +51,17 @@ builder.Services.AddTransient<IAccountSvc, AccountSvc>();
 
 builder.Services.AddTransient<ICategorySvc, CategorySvc>();
 
+builder.Services.AddTransient<IProductSvc, ProductSvc>();
+
+builder.Services.AddTransient<IUploadHelper, UploadHelper>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -61,9 +72,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseStaticFiles();
 app.MapControllers();
 
+app.UseCors("AllowAll");
 app.Run();

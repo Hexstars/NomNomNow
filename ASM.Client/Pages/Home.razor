@@ -1,7 +1,179 @@
 ﻿@page "/"
+@using ASM.Share.Models.Requests
+@inject HttpClient Http
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Trang Chủ</PageTitle>
 
-<h1>Hello, world!</h1>
+<style>
+    .category-carousel .swiper-wrapper {
+        display: flex;
+        flex-direction: row;
+    }
 
-Welcome to your new app.
+    .category-carousel .swiper-slide {
+        width: 100% !important; /* Each slide takes the full width */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .category-carousel img {
+        width: 161px;
+        height: 161px;
+    }
+
+    .category-carousel .category-title {
+        margin-top: 1rem;
+        font-size: 1rem;
+        font-weight: normal;
+    }
+</style>
+
+<div class="homepage-content">
+    <section class="py-5 overflow-hidden">
+        <div class="container-lg">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="section-header d-flex flex-wrap justify-content-between mb-5">
+                        <h2 class="section-title">DANH MỤC</h2>
+                        <div class="d-flex align-items-center">
+                            <a href="#" class="btn btn-primary me-2">Xem tất cả</a>
+                            <div class="swiper-buttons">
+                                <button class="swiper-prev category-carousel-prev btn btn-yellow">❮</button>
+                                <button class="swiper-next category-carousel-next btn btn-yellow">❯</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Đang tải danh mục...</p>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <p class="text-danger">@errorMessage</p>
+                    }
+                    else if (categories == null || !categories.Any())
+                    {
+                        <p>Không có danh mục nào để hiển thị.</p>
+                    }
+                    else
+                    {
+                        <div class="category-carousel swiper">
+                            <div class="swiper-wrapper">
+                                @foreach (var category in categories)
+                                {
+                                    <div class="swiper-slide">
+                                        <a class="nav-link text-center" style="text-decoration:none; cursor: pointer"
+                                           href="/products/category/@category.CategoryId">
+                                            <img src="https://localhost:7058/images/Categories/@category.Image" class="rounded-circle" alt="@category.CategoryName">
+                                            <h4 class="fs-6 mt-3 fw-normal category-title">@category.CategoryName</h4>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pb-5">
+        <div class="container-lg">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="section-header d-flex flex-wrap justify-content-between my-4">
+                        <h2 class="section-title">SẢN PHẨM</h2>
+                        <div class="d-flex align-items-center">
+                            <a href="#" class="btn btn-primary rounded-1">Xem tất cả</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (isLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Đang tải sản phẩm...</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <p class="text-danger">@errorMessage</p>
+            }
+            else if (products == null || !products.Any())
+            {
+                <p>Không có sản phẩm nào để hiển thị.</p>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var product in products)
+                    {
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100">
+                                <img src="https://localhost:7058/images/Products/@product.Image" class="card-img-top" />
+                                <div class="card-body">
+                                    <h5 class="card-title">@product.ProductName</h5>
+                                    <p class="card-text">@product.UnitPrice.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) VNĐ</p>
+                                    <a href="/product-details/@product.ProductId" class="btn btn-primary">Xem chi tiết</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<Category>? categories;
+    private List<Product>? products;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var homeData = await Http.GetFromJsonAsync<HomePage>("https://localhost:7058/api/Home");
+            if (homeData != null)
+            {
+                products = homeData.Products;
+                categories = homeData.Categories;
+            }
+            else
+            {
+                errorMessage = "Không có dữ liệu trả về từ API.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Lỗi khi tải dữ liệu: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi không mong muốn: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

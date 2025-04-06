@@ -1,4 +1,5 @@
-﻿using ASM.Share.Models.Requests;
+﻿using ASM.Share.Models;
+using ASM.Share.Models.Requests;
 using ASM.Share.Models.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -12,9 +13,9 @@ namespace ASM.API.Controllers
     [ApiController]
     public class TokenController : ControllerBase
     {
-        public IAccountSvc _accountSvc;
+        public AccountSvc _accountSvc;
         public IConfiguration _configuration;
-        public TokenController(IAccountSvc accountSvc, IConfiguration configuration)
+        public TokenController(AccountSvc accountSvc, IConfiguration configuration)
         {
             _accountSvc = accountSvc;
             _configuration = configuration;
@@ -26,7 +27,7 @@ namespace ASM.API.Controllers
             var account = _accountSvc.Login(request);
             if (account == null)
             {
-                return Unauthorized("Thông tin đăng nhập không đúng");
+                return Unauthorized("Thông tin đăng nhập không đúng.");
             }
             var claims = new[]
             {
@@ -48,6 +49,25 @@ namespace ASM.API.Controllers
             {
                 Token = new JwtSecurityTokenHandler().WriteToken(token)
             });
+        }
+        [HttpPost]
+        public IActionResult Register(Account request)
+        {
+            var account = new Account
+            {
+                Email = request.Email,
+                Password = request.Password,
+                FullName = request.FullName,
+                Phone = request.Phone,
+                Address = request.Address,
+                Role = Role.User
+            };
+            var result = _accountSvc.Register(account);
+            if (result)
+            {
+                return Ok("Đăng ký thành công.");
+            }
+            return BadRequest("Email đã tồn tại.");
         }
     }
 }

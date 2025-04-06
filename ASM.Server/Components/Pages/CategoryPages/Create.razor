@@ -1,0 +1,81 @@
+﻿@page "/categories/create"
+@using Microsoft.EntityFrameworkCore
+@using ASM.Share.Models
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject HttpClient httpClient
+@rendermode InteractiveServer
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Category</h2>
+<hr />
+<div class="row">
+	<div class="col-md-4">
+		<EditForm Model="@Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
+			<DataAnnotationsValidator />
+			<ValidationSummary class="text-danger" role="alert" />
+			<div class="mb-3">
+				<label for="categoryname" class="form-label">CategoryName:</label>
+				<InputText id="categoryname" @bind-value="Category.CategoryName" class="form-control" aria-required="true" />
+				<ValidationMessage For="() => Category.CategoryName" class="text-danger" />
+			</div>
+			<div class="mb-3">
+				<label for="imageFile" class="form-label">Upload Image:</label>
+				<InputFile id="imageFile" OnChange="OnFileSelected" accept="image/*"/>
+			</div>
+			<button type="submit" class="btn btn-primary">Create</button>
+		</EditForm>
+	</div>
+</div>
+
+<div>
+	<a href="/categories">Back to List</a>
+</div>
+
+@code {
+	public Category Category { get; set; } = new();
+
+	private IBrowserFile? selectedFile; // Store the uploaded file
+
+	private async Task OnFileSelected(InputFileChangeEventArgs e)
+	{
+		selectedFile = e.File;
+	}
+
+	private async Task AddCategory()
+	{
+		if (selectedFile == null)
+		{
+			Console.WriteLine("No file selected.");
+			return;  // Don't proceed if no file is selected
+		}
+
+		// Convert file to byte array
+		var maxSize = 10 * 1024 * 1024; // 10MB
+		using var memoryStream = new MemoryStream();
+		await selectedFile.OpenReadStream(maxSize).CopyToAsync(memoryStream);
+		var fileBytes = memoryStream.ToArray();
+
+		// Prepare FormData
+		var formData = new MultipartFormDataContent
+		{
+			{ new StringContent(Category.CategoryName), "CategoryName" },
+			{ new ByteArrayContent(fileBytes), "imageFile", selectedFile.Name }
+		};
+
+		// Send to API
+		var response = await httpClient.PostAsync("https://localhost:7058/api/categories", formData);
+
+		if (response.IsSuccessStatusCode)
+		{
+			NavigationManager.NavigateTo("/categories");
+		}
+		else
+		{
+			var errorContent = await response.Content.ReadAsStringAsync();
+			Console.WriteLine($"Error uploading category. Status code: {response.StatusCode}, Response: {errorContent}");
+		}
+	}
+}

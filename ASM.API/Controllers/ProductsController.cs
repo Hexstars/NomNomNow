@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ASM.Share.Models;
+using Microsoft.AspNetCore.Hosting;
+using ASM.Share.Models.Services;
 
 namespace ASM.API.Controllers
 {
@@ -14,17 +16,23 @@ namespace ASM.API.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IProductSvc _productSvc;
+        private readonly IUploadHelper _uploadHelper;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(ApplicationDbContext context, IUploadHelper uploadHelper, IWebHostEnvironment webHostEnvironment, IProductSvc productSvc)
         {
             _context = context;
+            _uploadHelper = uploadHelper;
+            _webHostEnvironment = webHostEnvironment;
+            _productSvc = productSvc;
         }
 
         // GET: api/Products
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return await _context.Products.ToListAsync();
+            return Ok(await _productSvc.GetAllProductsAsync());
         }
 
         // GET: api/Products/5
@@ -77,10 +85,36 @@ namespace ASM.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            if (product.ImageFile != null)
+            {
+                if (product.ImageFile.Length > 0)
+                {
+                    // Đường dẫn lưu trữ file
+                    string rootPath = Path.Combine(_webHostEnvironment.WebRootPath, "images");
 
-            return CreatedAtAction("GetProduct", new { id = product.ProductId }, product);
+                    // Kiểm tra và tải ảnh lên
+                    await _uploadHelper.UploadImage(product.ImageFile, rootPath, "Products");
+
+                    // Lưu tên file vào Image (tên file là ImageFile.Name)
+                    product.Image = product.ImageFile.FileName;
+
+                    // Thêm danh mục vào cơ sở dữ liệu
+                    var result = await _productSvc.AddProductAsync(product);
+                    if (!result)
+                    {
+                        return BadRequest("Không thể thêm sản phẩm.");
+                    }
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest("File không hợp lệ.");
+                }
+            }
+            else
+            {
+                return BadRequest("Vui lòng chọn hình ảnh.");
+            }
         }
 
         // DELETE: api/Products/5

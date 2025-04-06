@@ -1,0 +1,119 @@
+﻿@page "/categories/edit"
+@using Microsoft.EntityFrameworkCore
+@using ASM.Share.Models
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject HttpClient httpClient
+@rendermode InteractiveServer
+
+<PageTitle>Chỉnh sửa Danh mục</PageTitle>
+
+<h1>Chỉnh sửa Danh mục</h1>
+
+@if (Category is null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<div class="row">
+		<div class="col-md-4">
+			<EditForm Model="@Category" OnValidSubmit="UpdateCategory" enctype="multipart/form-data" FormName="categoryEditForm">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
+
+				<input type="hidden" @bind="Category.CategoryId" />
+
+				<div class="mb-3">
+					<label for="categoryname" class="form-label">Tên Danh mục:</label>
+					<InputText id="categoryname" @bind-Value="Category.CategoryName" class="form-control" />
+					<ValidationMessage For="() => Category.CategoryName" class="text-danger" />
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">Ảnh hiện tại:</label>
+					<div>
+						<img src="@($"https://localhost:7058/images/Categories/{Category.Image}")" alt="Category Image" width="150" height="150" />
+					</div>
+				</div>
+
+				<div class="mb-3">
+					<label for="imageFile" class="form-label">Tải lên ảnh mới:</label>
+					<InputFile id="imageFile" OnChange="OnFileSelected" accept="image/*" />
+				</div>
+
+				<button type="submit" class="btn btn-primary">Lưu</button>
+			</EditForm>
+		</div>
+	</div>
+}
+
+<div>
+	<a href="/categories">Trở về</a>
+</div>
+
+@code {
+    private Category Category { get; set; } = new(); // New instance for updating
+    private IBrowserFile? selectedFile;
+
+    [SupplyParameterFromQuery]
+    private int CategoryId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        var existingCategory = await context.Categories.FirstOrDefaultAsync(m => m.CategoryId == CategoryId);
+
+        if (existingCategory is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        // Populate the new instance with existing data
+        Category.CategoryId = existingCategory.CategoryId;
+        Category.CategoryName = existingCategory.CategoryName;
+        Category.Image = existingCategory.Image; // Retain the existing image
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task UpdateCategory()
+    {
+        if (Category is null)
+        {
+            return;
+        }
+
+        var formData = new MultipartFormDataContent
+        {
+            { new StringContent(Category.CategoryName), "CategoryName" },
+            { new StringContent(Category.CategoryId.ToString()), "CategoryId" }
+        };
+
+        if (selectedFile != null)
+        {
+            var maxSize = 10 * 1024 * 1024; // 10MB
+            using var memoryStream = new MemoryStream();
+            await selectedFile.OpenReadStream(maxSize).CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+
+            formData.Add(new ByteArrayContent(fileBytes), "imageFile", selectedFile.Name);
+        }
+
+        var response = await httpClient.PutAsync($"https://localhost:7058/api/categories/{Category.CategoryId}", formData);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/categories");
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to update category. Status: {response.StatusCode}, Error: {errorMessage}");
+        }
+    }
+}

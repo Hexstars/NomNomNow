@@ -1,0 +1,39 @@
+﻿@page "/accounts"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using ASM.Share.Models
+@using ASM.Share.Models
+@implements IAsyncDisposable
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="accounts/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Accounts">
+    <PropertyColumn Property="account => account.Email" />
+    <PropertyColumn Property="account => account.Password" />
+    <PropertyColumn Property="account => account.FullName" />
+    <PropertyColumn Property="account => account.Phone" />
+    <PropertyColumn Property="account => account.Address" />
+    <PropertyColumn Property="account => account.Role" />
+
+    <TemplateColumn Context="account">
+        <a href="@($"accounts/details?accountid={account.AccountId}")">Details</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

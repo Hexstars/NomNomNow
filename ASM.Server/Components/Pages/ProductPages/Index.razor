@@ -1,0 +1,37 @@
+﻿@page "/products"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using ASM.Share.Models
+@inject HttpClient Http
+<h1>Index</h1>
+
+<p>
+    <a href="products/create">Create New</a>
+</p>
+
+<QuickGrid TGridItem="Product" Class="table" Items="products.AsQueryable()">
+    <PropertyColumn Property="product => product.ProductName" />
+    <PropertyColumn Property="product => product.UnitPrice" />
+    <PropertyColumn Property="product => product.Quantity" />
+    <TemplateColumn Context="product">
+        <img src="@($"https://localhost:7058/images/Products/{product.Image}")"
+             alt="@product.ProductName"
+             width="50" height="50" />
+    </TemplateColumn>
+    <PropertyColumn Property="product => product.Category.CategoryName" />
+
+    <TemplateColumn Context="product">
+        <a href="@($"products/edit?productid={product.ProductId}")">Edit</a> |
+        <a href="@($"products/details?productid={product.ProductId}")">Details</a> |
+        <a href="@($"products/delete?productid={product.ProductId}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private List<Product> products = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Http.GetFromJsonAsync<List<Product>>("https://localhost:7058/api/products");
+    }
+}

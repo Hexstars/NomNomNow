@@ -1,0 +1,56 @@
+﻿@page "/accounts/details"
+@using Microsoft.EntityFrameworkCore
+@using ASM.Share.Models
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Account</h2>
+    <hr />
+    @if (account is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Email</dt>
+            <dd class="col-sm-10">@account.Email</dd>
+            <dt class="col-sm-2">Password</dt>
+            <dd class="col-sm-10">@account.Password</dd>
+            <dt class="col-sm-2">FullName</dt>
+            <dd class="col-sm-10">@account.FullName</dd>
+            <dt class="col-sm-2">Phone</dt>
+            <dd class="col-sm-10">@account.Phone</dd>
+            <dt class="col-sm-2">Address</dt>
+            <dd class="col-sm-10">@account.Address</dd>
+            <dt class="col-sm-2">Role</dt>
+            <dd class="col-sm-10">@account.Role</dd>
+        </dl>
+        <div>
+            <a href="@($"/accounts/edit?accountid={account.AccountId}")">Edit</a> |
+            <a href="@($"/accounts")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Account? account;
+
+    [SupplyParameterFromQuery]
+    private int AccountId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        account = await context.Accounts.FirstOrDefaultAsync(m => m.AccountId == AccountId);
+
+        if (account is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,39 +1,75 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">ASM.Client</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+@inject NavigationManager NavigationManager
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+    <a class="navbar-brand" href="/">NomNomNow</a>
+    <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    <div class="collapse navbar-collapse @(collapseNavMenu ? "" : "show")">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/">Trang chủ</NavLink>
+            </li>
+
+            @if (isLoggedIn)
+            {
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/cart">Giỏ hàng</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/orders">Đơn hàng</NavLink>
+                </li>
+            }
+        </ul>
+
+        <ul class="navbar-nav">
+            @if (isLoggedIn)
+            {
+                <li class="nav-item">
+                    <span class="nav-link text-light">Xin chào, @userEmail</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-warning" href="#" @onclick="Logout">Đăng xuất</a>
+                </li>
+            }
+            else
+            {
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/login">Đăng nhập</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/register">Đăng ký</NavLink>
+                </li>
+            }
+        </ul>
+    </div>
+</nav>
 
 @code {
     private bool collapseNavMenu = true;
+    private bool isLoggedIn = false;
+    private string? userEmail;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await SessionStorage.GetItemAsync<string>("Token");
+        userEmail = await SessionStorage.GetItemAsync<string>("Email");
+        isLoggedIn = !string.IsNullOrEmpty(token);
+    }
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await SessionStorage.RemoveItemAsync("Token");
+        await SessionStorage.RemoveItemAsync("Email");
+        isLoggedIn = false;
+        userEmail = null;
+        // Reload page or navigate
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 }

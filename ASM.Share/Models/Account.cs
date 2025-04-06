@@ -1,6 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ASM.Share.Models
 {
@@ -15,7 +14,7 @@ namespace ASM.Share.Models
         public int AccountId { get; set; }
 
         [Required(ErrorMessage = "Bạn cần nhập email")]
-        [RegularExpression("^[a-zA-Z0-9_\\.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,})+$", ErrorMessage = "Email không hợp lệ")]
+        [EmailAddress]
         //[Remote("")]
         public string Email { get; set; }
 

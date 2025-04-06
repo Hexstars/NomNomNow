@@ -1,0 +1,123 @@
+﻿@page "/product-details/{ProductId:int}"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="container my-5">
+    @if (product == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Đang tải sản phẩm...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Product Detail Section -->
+        <div class="row justify-content-center">
+            <!-- Product Image Column -->
+            <div class="col-md-6 mb-4">
+                <img src="https://localhost:7058/images/Products/@product.Image"
+                     class="img-fluid rounded"
+                     alt="@product.ProductName"
+                     style="object-fit: cover; width: 100%; height: 100%;">
+            </div>
+
+            <!-- Product Details Column -->
+            <div class="col-md-6 mb-4">
+                <div class="p-4">
+                    <!-- Product Name -->
+                    <h2 class="text-primary fw-bold">@product.ProductName</h2>
+
+                    <!-- Product Price -->
+                    <p class="mt-3">
+                        <strong>GIÁ:</strong>
+                        <span class="text-success">@product.UnitPrice.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) VNĐ</span>
+                    </p>
+
+                    <!-- Add to Cart Section -->
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center">
+                            <label for="quantity" class="me-3"><strong>SỐ LƯỢNG:</strong></label>
+                            <InputNumber class="form-control w-25 me-3"
+                                         @bind-Value="quantity"
+                                         min="1" max="10" />
+
+                            <button @onclick="AddToCart" class="btn btn-success">
+                                <i class="bi bi-cart-plus me-2"></i> THÊM VÀO GIỎ HÀNG
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success mt-3">
+                            @successMessage
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product? product;
+    private int quantity = 1;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            product = await Http.GetFromJsonAsync<Product>($"https://localhost:7058/api/Products/{Id}");
+            if (product == null) NavigationManager.NavigateTo("/notfound");
+        }
+        catch
+        {
+            NavigationManager.NavigateTo("/error");
+        }
+    }
+
+    private async Task AddToCart()
+    {
+        try
+        {
+            // Call your API endpoint to add to cart
+            var response = await Http.PostAsJsonAsync("https://localhost:7058/api/Cart", new
+            {
+                ProductId = product!.ProductId,
+                Quantity = quantity
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Đã thêm sản phẩm vào giỏ hàng!";
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                successMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi: {ex.Message}";
+            successMessage = null;
+        }
+    }
+}
