@@ -4,12 +4,12 @@ namespace ASM.Share.Models.Services
 {
     public interface IEncryptionHelper
     {
-        string EncryptPassword(string password);
-        bool VerifyPassword(string inputPassword, string storedPassword);
+        Task<string> EncryptPassword(string password);
+        Task<bool> VerifyPassword(string inputPassword, string storedPassword);
     }
     public class EncryptionHelper : IEncryptionHelper
     {
-        public string EncryptPassword(string password)
+        public async Task<string> EncryptPassword(string password)
         {
             // Tạo salt
             using (var rng = new RNGCryptoServiceProvider())
@@ -30,7 +30,7 @@ namespace ASM.Share.Models.Services
             }
         }
         // Xác thực
-        public bool VerifyPassword(string inputPassword, string storedPassword)
+        public async Task<bool> VerifyPassword(string inputPassword, string storedPassword)
         {
             byte[] hashBytes = Convert.FromBase64String(storedPassword);
             byte[] salt = new byte[16];

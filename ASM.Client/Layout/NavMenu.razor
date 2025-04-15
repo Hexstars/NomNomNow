@@ -1,48 +1,48 @@
 ﻿@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
 @inject NavigationManager NavigationManager
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-    <a class="navbar-brand" href="/">NomNomNow</a>
-    <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="navbar-nav">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">NomNomNow</a>
+        
+        <!-- Navbar items -->
+        <div class="navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Trang chủ</NavLink>
+                </li>
 
-    <div class="collapse navbar-collapse @(collapseNavMenu ? "" : "show")">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-                <NavLink class="nav-link" href="/">Trang chủ</NavLink>
-            </li>
+                @if (isLoggedIn)
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/cart">Giỏ hàng</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/orders">Đơn hàng</NavLink>
+                    </li>
+                }
+            </ul>
 
-            @if (isLoggedIn)
-            {
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/cart">Giỏ hàng</NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/orders">Đơn hàng</NavLink>
-                </li>
-            }
-        </ul>
-
-        <ul class="navbar-nav">
-            @if (isLoggedIn)
-            {
-                <li class="nav-item">
-                    <span class="nav-link text-light">Xin chào, @userEmail</span>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-warning" href="#" @onclick="Logout">Đăng xuất</a>
-                </li>
-            }
-            else
-            {
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/login">Đăng nhập</NavLink>
-                </li>
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/register">Đăng ký</NavLink>
-                </li>
-            }
-        </ul>
+            <ul class="navbar-nav">
+                @if (isLoggedIn)
+                {
+                    <li class="nav-item">
+                        <span class="nav-link text-light">Xin chào, @userEmail</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="#" @onclick="Logout">Đăng xuất</a>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/login">Đăng nhập</NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="/register">Đăng ký</NavLink>
+                    </li>
+                }
+            </ul>
+        </div>
     </div>
 </nav>
 

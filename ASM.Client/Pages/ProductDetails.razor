@@ -1,6 +1,8 @@
 ﻿@page "/product-details/{ProductId:int}"
-@inject HttpClient Http
+@using ASM.Share.Models.Requests
+@inject HttpClient _http
 @inject NavigationManager NavigationManager
+@inject Microsoft.Extensions.Configuration.IConfiguration config
 @inject IJSRuntime JSRuntime
 
 <div class="container my-5">
@@ -72,7 +74,9 @@
 
 @code {
     [Parameter]
-    public int Id { get; set; }
+    public int ProductId { get; set; }
+
+    private string apiUrl = string.Empty;
 
     private Product? product;
     private int quantity = 1;
@@ -83,40 +87,54 @@
     {
         try
         {
-            product = await Http.GetFromJsonAsync<Product>($"https://localhost:7058/api/Products/{Id}");
-            if (product == null) NavigationManager.NavigateTo("/notfound");
+            apiUrl = config.GetSection("API")["APIUrl"].ToString();
+            var request = await CreateAuthRequest(HttpMethod.Get, $"{apiUrl}Products/{ProductId}");
+            var response = await _http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                product = await response.Content.ReadFromJsonAsync<Product>();
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/notfound");
+            }
         }
         catch
         {
             NavigationManager.NavigateTo("/error");
         }
     }
+    private async Task<HttpRequestMessage> CreateAuthRequest(HttpMethod method, string url)
+    {
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var request = new HttpRequestMessage(method, url);
 
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return request;
+    }
     private async Task AddToCart()
     {
-        try
-        {
-            // Call your API endpoint to add to cart
-            var response = await Http.PostAsJsonAsync("https://localhost:7058/api/Cart", new
+        var request = await CreateAuthRequest(HttpMethod.Post, $"{apiUrl}Carts");
+        request.Content = JsonContent.Create(new AddToCartRequest
             {
-                ProductId = product!.ProductId,
+                ProductId = product.ProductId,
                 Quantity = quantity
             });
 
-            if (response.IsSuccessStatusCode)
-            {
-                successMessage = "Đã thêm sản phẩm vào giỏ hàng!";
-                errorMessage = null;
-            }
-            else
-            {
-                errorMessage = await response.Content.ReadAsStringAsync();
-                successMessage = null;
-            }
-        }
-        catch (Exception ex)
+        var response = await _http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
         {
-            errorMessage = $"Lỗi: {ex.Message}";
+            successMessage = "Đã thêm sản phẩm vào giỏ hàng!";
+            errorMessage = null;
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
             successMessage = null;
         }
     }

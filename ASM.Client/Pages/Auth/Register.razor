@@ -1,5 +1,113 @@
 ﻿@page "/register"
-<PageTitle>Đăng Nhập</PageTitle>
-<h3>Đăng ký</h3>
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+@inject Microsoft.Extensions.Configuration.IConfiguration config;
+<PageTitle>Đăng Ký</PageTitle>
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <h2 class="text-center">ĐĂNG KÝ</h2>
 
-<p>Nhập thông tin để đăng ký...</p>
+            <EditForm Model="account" OnValidSubmit="HandleRegister">
+                <DataAnnotationsValidator />
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+
+                <div class="mb-3">
+                    <label for="fullName" class="form-label">Họ tên</label>
+                    <InputText id="fullName" class="form-control" @bind-Value="account.FullName" placeholder="Nhập họ tên" />
+                    <ValidationMessage For="() => account.FullName" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <InputText id="email" type="email" class="form-control" @bind-Value="account.Email" placeholder="Nhập email" />
+                    <ValidationMessage For="() => account.Email" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Mật khẩu</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="account.Password" placeholder="Nhập mật khẩu" />
+                    <ValidationMessage For="() => account.Password" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                    <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="account.ConfirmPassword" placeholder="Nhập lại mật khẩu" />
+                    <ValidationMessage For="() => account.ConfirmPassword" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Số điện thoại</label>
+                    <InputText id="phone" type="tel" class="form-control" @bind-Value="account.Phone" placeholder="Nhập số điện thoại" />
+                    <ValidationMessage For="() => account.Phone" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="address" class="form-label">Địa chỉ</label>
+                    <InputText id="address" class="form-control" @bind-Value="account.Address" placeholder="Nhập địa chỉ" />
+                    <ValidationMessage For="() => account.Address" class="text-danger" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span> Đang đăng ký...</span>
+                    }
+                    else
+                    {
+                        <span>Đăng ký</span>
+                    }
+                </button>
+
+                <div class="mt-3 text-center">
+                    <p>Đã có tài khoản? <NavLink href="/login">Đăng nhập tại đây</NavLink></p>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Account account = new();
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            var apiUrl = config.GetSection("API")["APIUrl"].ToString();
+            isSubmitting = true;
+            errorMessage = null;
+
+            // Send the registration data to the API
+            var response = await Http.PostAsJsonAsync(apiUrl+"token/register", account);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Redirect to the login page after successful registration
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                // Handle error response from the API
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrEmpty(errorContent) ? "Đăng ký thất bại. Vui lòng thử lại." : errorContent;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Đã xảy ra lỗi: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

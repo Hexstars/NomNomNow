@@ -31,16 +31,17 @@ builder.Services.AddAuthentication(opts =>
 })
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidateAudience = true,
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(5), // Add tolerance
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
                 };
             });
 
@@ -49,11 +50,18 @@ builder.Services.AddAuthentication(opts =>
 //Dependency Injection
 builder.Services.AddTransient<IAccountSvc, AccountSvc>();
 
+builder.Services.AddTransient<ICartSvc, CartSvc>();
+
+builder.Services.AddTransient<IOrderSvc, OrderSvc>();
+
 builder.Services.AddTransient<ICategorySvc, CategorySvc>();
 
 builder.Services.AddTransient<IProductSvc, ProductSvc>();
 
 builder.Services.AddTransient<IUploadHelper, UploadHelper>();
+
+builder.Services.AddTransient<IEncryptionHelper, EncryptionHelper>();
+
 
 builder.Services.AddCors(options =>
 {
@@ -72,10 +80,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+
 app.UseStaticFiles();
 app.MapControllers();
 
-app.UseCors("AllowAll");
 app.Run();

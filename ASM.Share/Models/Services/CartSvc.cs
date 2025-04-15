@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace ASM.Share.Models.Services
     {
         Task<Cart> GetUserCart(int userId); //Lấy giỏ hàng
         Task<List<CartProduct>> GetCartItemsAsync(int id); //Hiển thị giỏ hàng
+        Task<bool> AddToCart(int userId, int productId, int quantity);//Thêm vào giỏ hàng
         Task<bool> UpdateQuantity(int userId, int productId, int newQuantity);//Thay đổi số lượng
         Task<bool> DeleteFromCart(int userId, int productId);
         Task<bool> ClearCartAsync(int cartId);//Dọn sản phẩm trong giỏ hàng
@@ -49,6 +51,47 @@ namespace ASM.Share.Models.Services
                                               }).ToList();
             return cartProducts;
         }
+        public async Task<bool> AddToCart(int userId, int productId, int Quantity)
+        {
+            // Kiểm tra giỏ hàng tồn tại chưa
+            var userCart = await GetUserCart(userId);
+
+            if (userCart == null)
+            {
+                // Nếu giỏ hàng chưa tồn tại, tạo mới
+                userCart = new Cart
+                {
+                    AccountId = userId,
+                };
+                _context.Carts.Add(userCart);
+                await _context.SaveChangesAsync();
+            }
+
+            // Kiểm tra nếu giỏ hàng đã có sản phẩm này chưa
+            var existingCartDetail = _context.CartDetails
+                .FirstOrDefault(cd => cd.CartId == userCart.CartId && cd.ProductId == productId);
+
+            if (existingCartDetail != null)
+            {
+                // Nếu có rồi, tăng số lượng của sản phẩm trong giỏ hàng
+                existingCartDetail.Quantity += 1;
+                _context.CartDetails.Update(existingCartDetail);
+            }
+            else
+            {
+                // Nếu chưa có, thêm sản phẩm mới vào giỏ hàng
+                var cartDetail = new CartDetail
+                {
+                    CartId = userCart.CartId,
+                    ProductId = productId,
+                    Quantity = Quantity,
+                };
+                _context.CartDetails.Add(cartDetail);
+            }
+            // Lưu thay đổi vào cơ sở dữ liệu
+            await _context.SaveChangesAsync();
+            return true;
+        }
         public async Task<bool> UpdateQuantity(int userId, int productId, int newQuantity)
         {
             try
@@ -69,7 +112,7 @@ namespace ASM.Share.Models.Services
                 cartProduct.Quantity = newQuantity;
 
                 _context.Update(cartProduct);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return true;
             }
             catch
@@ -96,7 +139,7 @@ namespace ASM.Share.Models.Services
                 }
                 // Remove the product from the cart
                 _context.CartDetails.Remove(cartProduct);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return true;
             }
             catch

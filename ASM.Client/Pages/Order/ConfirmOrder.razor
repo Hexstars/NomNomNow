@@ -1,0 +1,125 @@
+﻿@page "/confirm-order"
+@using ASM.Share.Models
+@using ASM.Share.Models.Responses
+@inject HttpClient Http
+@inject IConfiguration config
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<h1 class="text-2xl font-bold mb-6">XÁC NHẬN ĐƠN HÀNG</h1>
+
+@if (isLoading)
+{
+    <p>Đang tải dữ liệu...</p>
+}
+else if (Account == null || CartItems == null || !CartItems.Any())
+{
+    <p class="font-semibold text-center">Không có thông tin đơn hàng.</p>
+}
+else
+{
+    <div class="mb-6 border p-4 rounded-lg shadow-sm bg-white">
+        <h2 class="text-lg font-semibold mb-3">THÔNG TIN NGƯỜI NHẬN</h2>
+        <p><strong>Họ và tên:</strong> @Account.FullName</p>
+        <p><strong>Số điện thoại:</strong> @Account.Phone</p>
+        <p><strong>Địa chỉ:</strong> @Account.Address</p>
+    </div>
+
+    <div class="mb-6 border p-4 rounded-lg shadow-sm bg-white">
+        <h2 class="text-lg font-semibold mb-3">CHI TIẾT ĐƠN HÀNG</h2>
+        <table class="table-auto w-full border border-collapse">
+            <thead class="bg-gray-100 text-center">
+                <tr>
+                    <th class="p-2 border">Hình ảnh</th>
+                    <th class="p-2 border">Tên sản phẩm</th>
+                    <th class="p-2 border">Đơn giá</th>
+                    <th class="p-2 border">Số lượng</th>
+                    <th class="p-2 border">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+                @foreach (var item in CartItems)
+                {
+                    <tr class="border-t">
+                        <td class="p-2 border">
+                            <img src="@($"https://localhost:7058/images/Products/{item.Image}")"
+                                 alt="@item.ProductName"
+                                 style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;" />
+                        </td>
+                        <td class="p-2 border">@item.ProductName</td>
+                        <td class="p-2 border">@item.UnitPrice.ToString("N0") ₫</td>
+                        <td class="p-2 border">@item.Quantity</td>
+                        <td class="p-2 border font-semibold">@item.Total.ToString("N0") ₫</td>
+                    </tr>
+                }
+                <tr class="bg-gray-100 font-semibold">
+                    <td colspan="4" class="text-right p-2 border">Tổng cộng:</td>
+                    <td class="text-red-600 p-2 border">@TotalAmount.ToString("N0") ₫</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="text-right">
+        <button @onclick="SubmitOrder"
+                class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
+            Xác nhận đặt hàng
+        </button>
+    </div>
+}
+
+@code {
+    private Account? Account;
+    private List<Share.Models.CartProduct>? CartItems;
+    private bool isLoading = true;
+    private string apiUrl = string.Empty;
+
+    private decimal TotalAmount => CartItems?.Sum(item => item.Total) ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            apiUrl = config["API:APIUrl"] ?? string.Empty;
+
+            var request = await CreateAuthRequest(HttpMethod.Get, $"{apiUrl}orders/getdetails");
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<Share.Models.Responses.ConfirmOrder>();
+                if (result != null)
+                {
+                    Account = result.Account;
+                    CartItems = result.CartProducts;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tải thông tin đơn hàng: " + ex.Message);
+        }
+
+        isLoading = false;
+    }
+
+    private async Task<HttpRequestMessage> CreateAuthRequest(HttpMethod method, string url)
+    {
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var request = new HttpRequestMessage(method, url);
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return request;
+    }
+
+    private async Task SubmitOrder()
+    {
+        await Task.Delay(500); // Mô phỏng xử lý
+        Console.WriteLine("Đơn hàng đã được xác nhận!");
+        NavigationManager.NavigateTo("/order-success");
+    }
+}

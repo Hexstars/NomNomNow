@@ -13,33 +13,33 @@ namespace ASM.API.Controllers
     [ApiController]
     public class TokenController : ControllerBase
     {
-        public AccountSvc _accountSvc;
+        public IAccountSvc _accountSvc;
         public IConfiguration _configuration;
-        public TokenController(AccountSvc accountSvc, IConfiguration configuration)
+        public TokenController(IAccountSvc accountSvc, IConfiguration configuration)
         {
             _accountSvc = accountSvc;
             _configuration = configuration;
         }
 
-        [HttpPost]
-        public IActionResult Login(LoginRequest request)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginRequest request)
         {
-            var account = _accountSvc.Login(request);
+            var account = await _accountSvc.Login(request);
             if (account == null)
             {
                 return Unauthorized("Thông tin đăng nhập không đúng.");
             }
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, _configuration["Jwt:Subject"]),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToString()),
+                //new Claim(JwtRegisteredClaimNames.Sub, _configuration["Jwt:Subject"]),
+                //new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 
-                new Claim("Id", account.AccountId.ToString()),
-                new Claim("Email", account.Email),
+                new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
+                new Claim(ClaimTypes.Email, account.Email),
+                new Claim(ClaimTypes.Role, account.Role.ToString())
 
             };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
             var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(_configuration["Jwt:Issuer"], _configuration["Jwt:Audience"],
                 claims,
@@ -50,8 +50,9 @@ namespace ASM.API.Controllers
                 Token = new JwtSecurityTokenHandler().WriteToken(token)
             });
         }
-        [HttpPost]
-        public IActionResult Register(Account request)
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(Account request)
         {
             var account = new Account
             {
@@ -62,7 +63,7 @@ namespace ASM.API.Controllers
                 Address = request.Address,
                 Role = Role.User
             };
-            var result = _accountSvc.Register(account);
+            var result = await _accountSvc.Register(account);
             if (result)
             {
                 return Ok("Đăng ký thành công.");

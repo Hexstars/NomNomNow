@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ASM.Share.Models
 {
@@ -57,7 +58,9 @@ namespace ASM.Share.Models
         public Role Role { get; set; }  // Foreign Key
 
         // Thêm thuộc tính Orders để biểu diễn mối quan hệ với đơn hàng
+        [JsonIgnore]
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>(); // Mối quan hệ một-nhiều
+        [JsonIgnore]
         public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     }

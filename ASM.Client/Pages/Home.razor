@@ -1,6 +1,8 @@
 ﻿@page "/"
 @using ASM.Share.Models.Requests
 @inject HttpClient Http
+@inject Microsoft.Extensions.Configuration.IConfiguration config
+@inject NavigationManager NavigationManager
 
 <PageTitle>Trang Chủ</PageTitle>
 
@@ -28,6 +30,11 @@
         font-size: 1rem;
         font-weight: normal;
     }
+
+    .product-image {
+        height: 200px; /* hoặc 180px tuỳ kích thước bạn mong muốn */
+        object-fit: cover; /* Cắt ảnh cho vừa khung mà không méo */
+    }
 </style>
 
 <div class="homepage-content">
@@ -39,10 +46,6 @@
                         <h2 class="section-title">DANH MỤC</h2>
                         <div class="d-flex align-items-center">
                             <a href="#" class="btn btn-primary me-2">Xem tất cả</a>
-                            <div class="swiper-buttons">
-                                <button class="swiper-prev category-carousel-prev btn btn-yellow">❮</button>
-                                <button class="swiper-next category-carousel-next btn btn-yellow">❯</button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -123,12 +126,13 @@
                     @foreach (var product in products)
                     {
                         <div class="col-md-3 mb-4">
-                            <div class="card h-100">
-                                <img src="https://localhost:7058/images/Products/@product.Image" class="card-img-top" />
+                            <div class="card h-100" @onclick="() => ViewProductDetails(product.ProductId)" style="cursor: pointer;">
+                                <img src="https://localhost:7058/images/Products/@product.Image"
+                                     class="card-img-top product-image" alt="@product.ProductName" />
                                 <div class="card-body">
                                     <h5 class="card-title">@product.ProductName</h5>
                                     <p class="card-text">@product.UnitPrice.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) VNĐ</p>
-                                    <a href="/product-details/@product.ProductId" class="btn btn-primary">Xem chi tiết</a>
+                                    <a href="/product-details/@product.ProductId" class="btn btn-primary" @onclick:stopPropagation>Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
@@ -149,10 +153,11 @@
     {
         try
         {
+            var apiUrl = config.GetSection("API")["APIUrl"].ToString();
             isLoading = true;
             errorMessage = null;
 
-            var homeData = await Http.GetFromJsonAsync<HomePage>("https://localhost:7058/api/Home");
+            var homeData = await Http.GetFromJsonAsync<HomePage>(apiUrl + "Home");
             if (homeData != null)
             {
                 products = homeData.Products;
@@ -175,5 +180,9 @@
         {
             isLoading = false;
         }
+    }
+    private void ViewProductDetails(int productId)
+    {
+        NavigationManager.NavigateTo($"/product-details/{productId}");
     }
 }

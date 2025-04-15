@@ -1,0 +1,160 @@
+﻿@page "/cart"
+@using ASM.Share.Models.Requests
+@inject NavigationManager NavigationManager
+@inject IConfiguration config
+@inject IJSRuntime JSRuntime
+@inject HttpClient _http
+<h1>GIỎ HÀNG</h1>
+
+@if (cartItems.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Hình ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Đơn giá</th>
+                <th>Số lượng</th>
+                <th>Tổng cộng</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in cartItems)
+            {
+                <tr>
+                    <td><img src="@($"https://localhost:7058/images/Products/{item.Image}")" width="100px" /></td>
+                    <td>@item.ProductName</td>
+                    <td>@item.UnitPrice.ToString("N0") VNĐ</td>
+                    <td>
+                        <div class="input-group" style="width: 150px;">
+                            <button class="btn btn-outline-secondary"
+                                    @onclick="(() => UpdateQuantity(item.ProductId, item.Quantity - 1))"
+                                    disabled="@(item.Quantity <= 1)">
+                                -
+                            </button>
+
+                            <input type="number" class="form-control text-center"
+                                   value="@item.Quantity"
+                                   min="1" max="10"
+                                   oninput="@((ChangeEventArgs e) => HandleInput(item, e))" />
+
+                            <button class="btn btn-outline-secondary"
+                                    @onclick="(() => UpdateQuantity(item.ProductId, item.Quantity + 1))"
+                                    disabled="@(item.Quantity >= 10)">
+                                +
+                            </button>
+                        </div>
+                    </td>
+                    <td>@((item.UnitPrice * item.Quantity).ToString("N0", new System.Globalization.CultureInfo("vi-VN"))) VNĐ</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="(() => RemoveFromCart(item.ProductId))">Xóa</button>
+                        <button class="btn btn-primary ms-2" @onclick="(() => ViewDetails(item.ProductId))">Chi tiết</button>
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td colspan="4" class="text-end"><h4>Thành tiền:</h4></td>
+                <td><h4>@grandTotal.ToString("N0") VNĐ</h4></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="text-end">
+        <button class="btn btn-primary btn-lg" @onclick="CreateOrder">Đặt hàng</button>
+    </div>
+}
+else
+{
+    <div class="alert alert-info text-center">
+        Giỏ hàng đang trống
+    </div>
+}
+
+@code {
+    private List<CartProduct> cartItems = new();
+    private decimal grandTotal => cartItems.Sum(item => item.UnitPrice * item.Quantity);
+    private string apiUrl = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        apiUrl = config.GetSection("API")["APIUrl"] ?? string.Empty;
+        await LoadCart();
+    }
+
+    private async Task<HttpRequestMessage> CreateAuthRequest(HttpMethod method, string url)
+    {
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var request = new HttpRequestMessage(method, url);
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return request;
+    }
+
+    private async Task LoadCart()
+    {
+        var request = await CreateAuthRequest(HttpMethod.Get, $"{apiUrl}carts");
+        var response = await _http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            cartItems = await response.Content.ReadFromJsonAsync<List<CartProduct>>() ?? new();
+        }
+    }
+
+    private async Task UpdateQuantity(int productId, int newQuantity)
+    {
+        newQuantity = Math.Clamp(newQuantity, 1, 10);
+
+        var request = await CreateAuthRequest(HttpMethod.Put, $"{apiUrl}carts/update-quantity");
+
+        request.Content = JsonContent.Create(new AddToCartRequest
+        {
+            ProductId = productId,
+            Quantity = newQuantity
+        });
+
+        var response = await _http.SendAsync(request);
+
+        // ✅ Luôn reload lại cart sau khi update để đồng bộ dữ liệu
+        await LoadCart();
+    }
+
+    private void HandleInput(CartProduct item, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int value))
+        {
+            item.Quantity = Math.Clamp(value, 1, 10);
+        }
+        else
+        {
+            item.Quantity = 1; // hoặc giữ nguyên giá trị cũ
+        }
+    }
+
+    private async Task RemoveFromCart(int productId)
+    {
+        var request = await CreateAuthRequest(HttpMethod.Delete, $"{apiUrl}carts/{productId}");
+        var response = await _http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadCart();
+        }
+    }
+
+    private void ViewDetails(int productId)
+    {
+        NavigationManager.NavigateTo($"/product-details/{productId}");
+    }
+
+    private void CreateOrder()
+    {
+        NavigationManager.NavigateTo("/confirm-order");
+    }
+}
