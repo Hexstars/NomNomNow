@@ -25,7 +25,7 @@
                 <tr>
                     <td><img src="@($"https://localhost:7058/images/Products/{item.Image}")" width="100px" /></td>
                     <td>@item.ProductName</td>
-                    <td>@item.UnitPrice.ToString("N0") VNĐ</td>
+                    <td>@item.UnitPrice.ToString("N0") ₫</td>
                     <td>
                         <div class="input-group" style="width: 150px;">
                             <button class="btn btn-outline-secondary"
@@ -46,7 +46,7 @@
                             </button>
                         </div>
                     </td>
-                    <td>@((item.UnitPrice * item.Quantity).ToString("N0", new System.Globalization.CultureInfo("vi-VN"))) VNĐ</td>
+                    <td>@((item.UnitPrice * item.Quantity).ToString("N0", new System.Globalization.CultureInfo("vi-VN"))) ₫</td>
                     <td>
                         <button class="btn btn-danger" @onclick="(() => RemoveFromCart(item.ProductId))">Xóa</button>
                         <button class="btn btn-primary ms-2" @onclick="(() => ViewDetails(item.ProductId))">Chi tiết</button>
@@ -55,7 +55,7 @@
             }
             <tr>
                 <td colspan="4" class="text-end"><h4>Thành tiền:</h4></td>
-                <td><h4>@grandTotal.ToString("N0") VNĐ</h4></td>
+                <td><h4>@grandTotal.ToString("N0") ₫</h4></td>
                 <td></td>
             </tr>
         </tbody>

@@ -58,6 +58,8 @@ builder.Services.AddTransient<ICategorySvc, CategorySvc>();
 
 builder.Services.AddTransient<IProductSvc, ProductSvc>();
 
+builder.Services.AddScoped<IVnPaySvc, VnPaySvc>();
+
 builder.Services.AddTransient<IUploadHelper, UploadHelper>();
 
 builder.Services.AddTransient<IEncryptionHelper, EncryptionHelper>();
