@@ -1,6 +1,84 @@
 ﻿@page "/order-created"
-<h3>OrderCreated</h3>
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IConfiguration config
+@inject IJSRuntime JSRuntime
+
+<h3 class="text-xl font-semibold mb-4">KẾT QUẢ THANH TOÁN</h3>
+
+@if (isLoading)
+{
+    <p>Đang xử lý thanh toán...</p>
+}
+else
+{
+    <div class="@messageClass font-semibold mb-4">
+        <p>@message</p>
+    </div>
+
+    <button class="btn btn-primary" @onclick="GoHome">
+        🏠 Trở về trang chủ
+    </button>
+}
 
 @code {
+    private string? message;
+    private string messageClass = "text-red-600";
+    private bool isLoading = true;
+    private async Task<HttpRequestMessage> CreateAuthRequest(HttpMethod method, string url)
+    {
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var request = new HttpRequestMessage(method, url);
 
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return request;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var responseCode = query["vnp_ResponseCode"];
+
+        if (responseCode == "00")
+        {
+            messageClass = "text-green-600";
+
+            // Gọi API để tạo đơn hàng
+            var apiUrl = config["API:APIUrl"];
+
+            try
+            {
+                var request = await CreateAuthRequest(HttpMethod.Post, $"{apiUrl}orders/");
+                var responseMessage = await Http.SendAsync(request);
+                if (responseMessage.IsSuccessStatusCode)
+                {
+                    message = "✅ Thanh toán thành công!, đơn hàng của bạn đã được tạo";
+
+                }
+                else
+                {
+                    Console.WriteLine("Yêu cầu không thành công: " + responseMessage.StatusCode);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi tạo đơn hàng: " + ex.Message);
+            }
+        }
+        else
+        {
+            message = "❌ Thanh toán thất bại. Vui lòng thử lại.";
+        }
+
+        isLoading = false;
+    }
+
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
 }

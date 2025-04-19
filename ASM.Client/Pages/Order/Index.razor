@@ -1,5 +1,171 @@
-﻿<h3>Index</h3>
+﻿@page "/orders"
+@using ASM.Share.Models
+@using ASM.Share.Models.Responses
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Config
+@inject NavigationManager NavigationManager
+
+<h1 class="text-3xl font-bold mb-6">DANH SÁCH ĐƠN HÀNG</h1>
+
+@if (isLoading)
+{
+    <p class="text-center">Đang tải danh sách đơn hàng...</p>
+}
+else if (orders == null || !orders.Any())
+{
+    <p class="font-semibold text-center">Danh sách đơn hàng đang trống</p>
+}
+else
+{
+    @foreach (var order in orders)
+    {
+        <div class="mb-8 border p-4 rounded-lg shadow-sm bg-white">
+            <h2 class="text-xl font-semibold">MÃ ĐƠN HÀNG: @order.OrderId</h2>
+            <p>NGÀY ĐẶT HÀNG: @order.OrderDate.ToString("dd/MM/yyyy HH:mm:ss tt")</p>
+            <p>TỔNG THÀNH TIỀN: @order.Total.ToString("N0") ₫</p>
+            @if (order.Status == OrderStatus.Cancelled)
+            {
+                <p>TRẠNG THÁI: <span class="text-red-600">@GetOrderStatusName(order.Status)</span></p>
+            }
+            else
+            {
+                <p>TRẠNG THÁI: @GetOrderStatusName(order.Status)</p>
+            }
+            <p>SỐ ĐIỆN THOẠI: @order.Phone</p>
+            <p>ĐỊA CHỈ NHẬN HÀNG: @order.Address</p>
+
+            <table class="table-auto w-full border-collapse border mt-4">
+                <thead class="bg-gray-100 text-center">
+                    <tr>
+                        <th class="p-2 border">TÊN SẢN PHẨM</th>
+                        <th class="p-2 border">HÌNH ẢNH</th>
+                        <th class="p-2 border">ĐƠN GIÁ</th>
+                        <th class="p-2 border">SỐ LƯỢNG</th>
+                        <th class="p-2 border">THÀNH TIỀN</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    @foreach (var product in order.Products)
+                    {
+                        <tr class="border-t">
+                            <td class="p-2 border">@product.ProductName</td>
+                            <td class="p-2 border">
+                                <img src="https://localhost:7058/images/Products/@product.Image"
+                                alt="@product.ProductName"
+                                style="width: 150px; height: auto; object-fit: contain; border-radius: 5px;" />
+                            </td>
+                            <td class="p-2 border">@product.UnitPrice.ToString("N0") ₫</td>
+                            <td class="p-2 border">@product.Quantity</td>
+                            <td class="p-2 border">@product.SubTotal.ToString("N0") ₫</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (order.Status != OrderStatus.Cancelled)
+            {
+                <div class="flex justify-end mt-4">
+                    <button @onclick="() => CancelOrder(order.OrderId)" class="btn btn-danger">
+                        Hủy đơn hàng
+                    </button>
+                </div>
+            }
+        </div>
+        <hr class="border-4 border-black my-8" />
+    }
+}
 
 @code {
+    private List<OrderView>? orders;
+    private bool isLoading = true;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            var apiUrl = Config["API:APIUrl"];
+            var request = await CreateAuthRequest(HttpMethod.Get, $"{apiUrl}orders/GetOrders");
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                orders = await response.Content.ReadFromJsonAsync<List<OrderView>>();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Vui lòng đăng nhập để xem đơn hàng");
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Không thể tải danh sách đơn hàng");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải đơn hàng: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    private string GetOrderStatusName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "Chờ xử lý",
+            OrderStatus.InProgress => "Đang giao hàng",
+            OrderStatus.Completed => "Đã giao hàng",
+            OrderStatus.Cancelled => "Đã hủy",
+            _ => status.ToString() // Fallback
+        };
+    }
+    private async Task CancelOrder(int orderId)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", "Bạn có chắc muốn hủy đơn hàng này?"))
+        {
+            return;
+        }
+
+        try
+        {
+            var apiUrl = Config["API:APIUrl"];
+            var request = await CreateAuthRequest(HttpMethod.Post, $"{apiUrl}orders/CancelOrder/{orderId}");
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Hủy đơn hàng thành công");
+                await LoadOrders(); // Refresh the order list
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Không thể hủy đơn hàng");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi khi hủy đơn hàng: {ex.Message}");
+        }
+    }
+
+    private async Task<HttpRequestMessage> CreateAuthRequest(HttpMethod method, string url)
+    {
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var request = new HttpRequestMessage(method, url);
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return request;
+    }
 }

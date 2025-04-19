@@ -12,8 +12,6 @@ namespace ASM.API.Controllers
             _vnPayService = vnPayService;
         }
 
-
-
         [HttpGet]
         public IActionResult PaymentCallbackVnpay()
         {

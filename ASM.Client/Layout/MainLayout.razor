@@ -203,7 +203,7 @@
     {
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            NavigationManager.NavigateTo($"/search?query={Uri.EscapeDataString(searchQuery)}");
+            NavigationManager.NavigateTo($"/search?name={Uri.EscapeDataString(searchQuery)}");
         }
     }
 }

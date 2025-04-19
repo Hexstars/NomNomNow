@@ -1,4 +1,4 @@
-﻿namespace ASM.Share.Models.Requests
+﻿namespace ASM.Share.Models.Responses
 {
     public class HomePage
     {

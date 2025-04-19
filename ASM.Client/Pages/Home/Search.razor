@@ -1,0 +1,89 @@
+﻿@page "/search"
+@inject HttpClient Http
+@inject IConfiguration config
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.WebUtilities
+<style>
+    /* Only necessary custom CSS for image container height */
+    .card-img-container {
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Replaces transform/box-shadow with Bootstrap-like transition */
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+        .transition-all:hover {
+            transform: translateY(-0.25rem);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+</style>
+<div class="container my-5">
+    @if (products == null)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Search Results Header -->
+        <h2 class="mb-4">
+            <i class="fa-solid fa-magnifying-glass text-danger"></i>
+            Kết quả tìm kiếm: @products.Count sản phẩm.
+        </h2>
+
+        <!-- Products Section -->
+        <div class="row g-4">
+            @foreach (var product in products)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <!-- Product Card -->
+                    <div class="card h-100 shadow-sm transition-all">
+                        <a href="/product-details/@product.ProductId" class="text-decoration-none text-dark">
+                            <div class="card-img-container bg-light p-3 rounded-top">
+                                <img src="https://localhost:7058/images/products/@product.Image"
+                                     alt="@product.ProductName"
+                                     class="img-fluid mx-auto d-block">
+                            </div>
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-truncate mb-3">@product.ProductName</h5>
+                                <p class="card-text text-danger fw-bold">VNĐ @product.UnitPrice.ToString("N0")</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+
+
+@code {
+    private List<Product> products = new();
+    private string searchQuery = string.Empty;
+    private string apiUrl = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        apiUrl = config.GetSection("API")["APIUrl"] ?? string.Empty;
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("name", out var name))
+        {
+            searchQuery = name.First() ?? string.Empty;
+            await SearchProducts();
+        }
+    }
+
+    private async Task SearchProducts()
+    {
+        products = await Http.GetFromJsonAsync<List<Product>>($"{apiUrl}home/search?name={searchQuery}");
+    }
+}

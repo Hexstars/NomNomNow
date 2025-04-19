@@ -1,8 +1,9 @@
 ﻿using ASM.Share.Models;
-using ASM.Share.Models.Requests;
+using ASM.Share.Models.Responses;
 using ASM.Share.Models.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASM.API.Controllers
 {
@@ -32,6 +33,12 @@ namespace ASM.API.Controllers
             };
 
             return Ok(result);
+        }
+        [HttpGet("search")]
+        public async Task<ActionResult<List<Product>>> SearchProducts(string name)
+        {
+            var products = await _productSvc.Search(name);
+            return Ok(products);
         }
     }
 }

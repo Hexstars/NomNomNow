@@ -8,6 +8,7 @@ namespace ASM.Share.Models.Services
 {
     public interface IProductSvc
     {
+        Task<List<Product>> Search(string Name);
         Task<List<Product>> GetAllProductsAsync();
         Task<Product?> GetProductAsync(int id);
         Task<bool> AddProductAsync(Product product);
@@ -25,7 +26,14 @@ namespace ASM.Share.Models.Services
             _context = context;
             _logger = logger;
         }
+        public async Task<List<Product>> Search(string Name)
+        {
+            var products = await _context.Products
+            .Where(p => p.ProductName.ToLower().Contains(Name.ToLower())) // Convert both to lowercase
+            .ToListAsync();
 
+            return products;
+        }
         public async Task<List<Product>> GetAllProductsAsync()
         {
             return await _context.Products.Include(p => p.Category).ToListAsync();
