@@ -1,5 +1,7 @@
 ﻿using ASM.Share.Models;
 using ASM.Share.Models.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -45,7 +47,18 @@ builder.Services.AddAuthentication(opts =>
                 };
             });
 
-
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddGoogle(options =>
+{
+    options.ClientId = "835897664440-uejtghunq69k7abud9l8jrv5qfdho367.apps.googleusercontent.com";
+    options.ClientSecret = "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";
+    options.CallbackPath = "/signin-google";
+});
 
 //Dependency Injection
 builder.Services.AddTransient<IAccountSvc, AccountSvc>();
@@ -59,6 +72,8 @@ builder.Services.AddTransient<ICategorySvc, CategorySvc>();
 builder.Services.AddTransient<IProductSvc, ProductSvc>();
 
 builder.Services.AddScoped<IVnPaySvc, VnPaySvc>();
+
+builder.Services.AddScoped<IEmailSvc, EmailSvc>();
 
 builder.Services.AddTransient<IUploadHelper, UploadHelper>();
 

@@ -1,6 +1,6 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ASM.Server</a>
+        <a class="navbar-brand" href="">Quản trị</a>
     </div>
 </div>
 
@@ -10,21 +10,23 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Trang chủ
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categories">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Danh mục
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="products">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Sản phẩm
-            </NavLink>
-        </div>
+        <AuthorizeView>
+			<Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="categories">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Danh mục
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="products">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Sản phẩm
+                    </NavLink>
+                </div>
+			</Authorized>
+        </AuthorizeView>
     </nav>
 </div>
 

@@ -5,6 +5,7 @@
 @using ASM.Share.Models
 @implements IAsyncDisposable
 @inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+@attribute [Authorize]
 
 <PageTitle>Index</PageTitle>
 
