@@ -48,7 +48,28 @@ namespace ASM.API.Controllers
 
             return product;
         }
+        [HttpGet("MoreFromCategory/{id}")]
+        public async Task<ActionResult<List<Product>>> MoreFromCategory(int id)
+        {
+            var products = await _context.Products
+                .Where(p => p.CategoryId == id)
+                .Select(p => new Product // Using a DTO
+                {
+                    ProductId = p.ProductId,
+                    ProductName = p.ProductName,
+                    Image = p.Image,
+                    UnitPrice = p.UnitPrice
+                    // Add other relevant properties you want to expose
+                })
+                .ToListAsync();
 
+            if (products == null || !products.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(products);
+        }
         // PUT: api/Products/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]

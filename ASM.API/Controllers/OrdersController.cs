@@ -27,7 +27,7 @@ namespace ASM.API.Controllers
             _emailSvc = emailSvc;
         }
         [HttpGet("GetOrders")]
-        public async Task<ActionResult<List<OrderView>>> GetOrders()
+        public async Task<ActionResult<List<OrderView>>> GetOrders() //Xem các đơn hàng của người dùng
         {
             // Check if the user is authenticated
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -38,7 +38,6 @@ namespace ASM.API.Controllers
             var orders = await _orderSvc.GetAllOrders(userId);
             return Ok(orders);
         }
-
         [HttpPost]
         public async Task<ActionResult> CreateOrder()
         {

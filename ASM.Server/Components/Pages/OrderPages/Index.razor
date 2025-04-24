@@ -19,7 +19,7 @@
 
     <TemplateColumn Context="order">
         <a href="@($"orders/edit/{order.OrderId}")">Sửa</a> | 
-        <a href="@($"orders/details?orderid={order.OrderId}")">Chi tiết</a>
+        <a href="@($"orders/details/{order.OrderId}")">Chi tiết</a>
     </TemplateColumn>
 </QuickGrid>
 

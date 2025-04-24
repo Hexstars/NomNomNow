@@ -1,0 +1,132 @@
+﻿@page "/morefromcategory/{CategoryId:int}"
+@using ASM.Share.Models.Requests
+@using ASM.Share.Models.Responses
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
+
+<PageTitle>Sản phẩm theo danh mục</PageTitle>
+
+<style>
+    .product-card {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-card img {
+        max-height: 180px;
+        object-fit: contain;
+    }
+</style>
+
+<div class="container my-5">
+    <section class="py-3">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4">Sản phẩm trong danh mục @(category != null ? category.CategoryName : "...")</h2>
+                        <a href="/" class="btn btn-sm btn-outline-secondary">Về trang chủ</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                @if (isLoading)
+                {
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Đang tải sản phẩm...</p>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="col-12">
+                        <p class="text-danger">@errorMessage</p>
+                    </div>
+                }
+                else if (products == null || !products.Any())
+                {
+                    <div class="col-12">
+                        <p>Không có sản phẩm nào trong danh mục này.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var product in products)
+                    {
+                        <div class="col">
+                            <div class="card h-100 border-0 product-card">
+                                <div class="d-flex justify-content-center align-items-center bg-light" style="height: 180px;">
+                            <img src="@("https://localhost:7058/images/Products/" + product.Image)"
+                                 class="img-fluid p-2"
+                                 alt="@product.ProductName" />
+                        </div>
+                                <div class="card-body text-center">
+                                    <h6 class="card-title mb-1">@product.ProductName</h6>
+                                    <p class="text-muted mb-2">@product.UnitPrice.ToString("N0") ₫</p>
+                                    <a href="/product-details/@product.ProductId"
+                                       class="btn btn-sm btn-outline-primary"
+                                       @onclick:stopPropagation>Xem chi tiết</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    [Parameter]
+    public int CategoryId { get; set; }
+
+    private Category category;
+    private List<Product> products;
+    private bool isLoading = true;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var apiUrl = Config["API:APIUrl"] ?? throw new InvalidOperationException("API URL is not configured");
+
+            var categoryResponse = await Http.GetFromJsonAsync<Category>($"{apiUrl}Categories/{CategoryId}");
+            if (categoryResponse != null)
+            {
+                category = categoryResponse;
+            }
+            else
+            {
+                errorMessage = $"Không tìm thấy danh mục với ID: {CategoryId}";
+                isLoading = false;
+                return;
+            }
+
+            products = await Http.GetFromJsonAsync<List<Product>>($"{apiUrl}Products/MoreFromCategory/{CategoryId}");
+            if (products == null)
+            {
+                products = new List<Product>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi tải sản phẩm: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -1,54 +1,112 @@
-﻿@page "/orders/details"
+﻿@page "/orders/details/{OrderId:int}"
 @using Microsoft.EntityFrameworkCore
 @using ASM.Share.Models
+@using ASM.Share.Models.Responses
 @inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Chi tiết đơn hàng</PageTitle>
 
-<h1>Details</h1>
+<h1>Chi tiết đơn hàng</h1>
 
-<div>
-    <h2>Order</h2>
-    <hr />
-    @if (order is null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">AccountId</dt>
-            <dd class="col-sm-10">@order.AccountId</dd>
-            <dt class="col-sm-2">OrderDate</dt>
-            <dd class="col-sm-10">@order.OrderDate</dd>
-            <dt class="col-sm-2">Phone</dt>
-            <dd class="col-sm-10">@order.Phone</dd>
-            <dt class="col-sm-2">Address</dt>
-            <dd class="col-sm-10">@order.Address</dd>
-            <dt class="col-sm-2">Status</dt>
-            <dd class="col-sm-10">@order.Status</dd>
-        </dl>
-        <div>
-            <a href="@($"/orders/edit?orderid={order.OrderId}")">Edit</a> |
-            <a href="@($"/orders")">Back to List</a>
+@if (order == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Đơn hàng #@order.OrderId</h4>
+            <p>Ngày đặt hàng: @order.OrderDate.ToString("dd/MM/yyyy HH:mm:ss")</p>
+            <p>Trạng thái: @GetOrderStatusName(order.Status)</p>
         </div>
-    }
-</div>
+        <div class="card-body">
+            <h5 class="mb-3">Thông tin khách hàng</h5>
+            <p><strong>Họ và tên:</strong> @order.Account?.FullName</p>
+            <p><strong>Số điện thoại:</strong> @order.Phone</p>
+            <p><strong>Địa chỉ:</strong> @order.Address</p>
+
+            <h5 class="mt-4 mb-3">Sản phẩm trong đơn hàng</h5>
+            @if (order.OrderDetails != null && order.OrderDetails.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Tên sản phẩm</th>
+                                <th>Hình ảnh</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Tổng tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var detail in order.OrderDetails)
+                            {
+                                <tr>
+                                    <td>@detail.Product?.ProductName</td>
+                                    <td>
+                                        <img src="https://localhost:7058/images/Products/@detail.Product?.Image"
+                                             alt="@detail.Product?.ProductName" width="80" class="img-thumbnail" />
+                                    </td>
+                                    <td>@detail.UnitPrice.ToString("N0") ₫</td>
+                                    <td>@detail.Quantity</td>
+                                    <td>@((detail.UnitPrice * detail.Quantity).ToString("N0")) ₫</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">Tổng tiền đơn hàng:</td>
+                                <td class="fw-bold">@order.OrderDetails.Sum(d => d.UnitPrice * d.Quantity).ToString("N0") ₫</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>Không có sản phẩm nào.</p>
+            }
+
+            <div class="mt-4">
+                <a href="/orders" class="btn btn-secondary">Trở về danh sách</a>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private Order? order;
 
-    [SupplyParameterFromQuery]
-    private int OrderId { get; set; }
+    [Parameter]
+    public int OrderId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        order = await context.Orders.FirstOrDefaultAsync(m => m.OrderId == OrderId);
+        order = await context.Orders
+            .Include(o => o.Account) // Tải thông tin
+            .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product) // Lấy các sản phẩm
+            .FirstOrDefaultAsync(m => m.OrderId == OrderId);
 
         if (order is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
+    }
+
+    private string GetOrderStatusName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "Chờ xử lý",
+            OrderStatus.InProgress => "Đang giao hàng",
+            OrderStatus.Completed => "Đã giao hàng",
+            OrderStatus.Cancelled => "Đã hủy",
+            _ => status.ToString()
+        };
     }
 }
