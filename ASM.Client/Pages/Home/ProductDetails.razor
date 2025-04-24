@@ -4,6 +4,7 @@
 @inject NavigationManager NavigationManager
 @inject Microsoft.Extensions.Configuration.IConfiguration config
 @inject IJSRuntime JSRuntime
+<PageTitle>Chi tiết sản phẩm</PageTitle>
 
 <div class="container my-5">
     @if (product == null)
@@ -36,7 +37,7 @@
                     <!-- Product Price -->
                     <p class="mt-3">
                         <strong>GIÁ:</strong>
-                        <span class="text-success">@product.UnitPrice.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) VNĐ</span>
+                        <span class="text-success">@product.UnitPrice.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) ₫</span>
                     </p>
 
                     <!-- Add to Cart Section -->

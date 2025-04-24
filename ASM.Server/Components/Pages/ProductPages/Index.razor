@@ -4,10 +4,11 @@
 @using ASM.Share.Models
 @inject HttpClient Http
 @attribute [Authorize]
-<h1>Index</h1>
+<PageTitle>Sản phẩm</PageTitle>
+
 
 <p>
-    <a href="products/create">Create New</a>
+    <a href="products/create">Thêm mới</a>
 </p>
 
 <QuickGrid TGridItem="Product" Class="table" Items="products.AsQueryable()">
@@ -22,9 +23,9 @@
     <PropertyColumn Property="product => product.Category.CategoryName" />
 
     <TemplateColumn Context="product">
-        <a href="@($"products/edit?productid={product.ProductId}")">Edit</a> |
-        <a href="@($"products/details?productid={product.ProductId}")">Details</a> |
-        <a href="@($"products/delete?productid={product.ProductId}")">Delete</a>
+        <a href="@($"products/edit?productid={product.ProductId}")">Sửa</a> |
+        <a href="@($"products/details?productid={product.ProductId}")">Chi tiết</a> |
+        <a href="@($"products/delete?productid={product.ProductId}")">Xóa</a>
     </TemplateColumn>
 </QuickGrid>
 

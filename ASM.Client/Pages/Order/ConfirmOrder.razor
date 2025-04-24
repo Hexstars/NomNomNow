@@ -7,8 +7,9 @@
 @inject IConfiguration config
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+<PageTitle>Xác nhận đơn hàng</PageTitle>
 
-<h1 class="text-2xl font-bold mb-6">XÁC NHẬN ĐƠN HÀNG</h1>
+<h2 class="mb-4">Xác nhận đơn hàng</h2>
 
 @if (isLoading)
 {
@@ -16,60 +17,69 @@
 }
 else if (Account == null || CartItems == null || !CartItems.Any())
 {
-    <p class="font-semibold text-center">Không có thông tin đơn hàng.</p>
+    <div class="alert alert-warning text-center py-4">
+        <h4>Không có thông tin đơn hàng để xác nhận.</h4>
+        <a href="/cart" class="btn btn-outline-secondary mt-2">Quay lại giỏ hàng</a>
+    </div>
 }
 else
 {
-    <div class="mb-6 border p-4 rounded-lg shadow-sm bg-white">
-        <h2 class="text-lg font-semibold mb-3">THÔNG TIN NGƯỜI NHẬN</h2>
-        <p><strong>Họ và tên:</strong> @Account.FullName</p>
-        <p><strong>Số điện thoại:</strong> @Account.Phone</p>
-        <p><strong>Địa chỉ:</strong> @Account.Address</p>
+    <div class="card mb-4">
+        <div class="card-header">Thông tin người nhận</div>
+        <div class="card-body">
+            <p><strong>Họ và tên:</strong> @Account.FullName</p>
+            <p><strong>Số điện thoại:</strong> @Account.Phone</p>
+            <p><strong>Địa chỉ:</strong> @Account.Address</p>
+        </div>
     </div>
 
-    <div class="mb-6 border p-4 rounded-lg shadow-sm bg-white">
-        <h2 class="text-lg font-semibold mb-3">CHI TIẾT ĐƠN HÀNG</h2>
-        <table class="table-auto w-full border border-collapse">
-            <thead class="bg-gray-100 text-center">
-                <tr>
-                    <th class="p-2 border">Hình ảnh</th>
-                    <th class="p-2 border">Tên sản phẩm</th>
-                    <th class="p-2 border">Đơn giá</th>
-                    <th class="p-2 border">Số lượng</th>
-                    <th class="p-2 border">Thành tiền</th>
-                </tr>
-            </thead>
-            <tbody class="text-center">
-                @foreach (var item in CartItems)
-                {
-                    <tr class="border-t">
-                        <td class="p-2 border">
-                            <img src="@($"https://localhost:7058/images/Products/{item.Image}")"
-                                 alt="@item.ProductName"
-                                 style="width: 100px; height: 100px; object-fit: contain; border-radius: 5px; background-color: #f9f9f9;" />
-                        </td>
-                        <td class="p-2 border">@item.ProductName</td>
-                        <td class="p-2 border">@item.UnitPrice.ToString("N0") ₫</td>
-                        <td class="p-2 border">@item.Quantity</td>
-                        <td class="p-2 border font-semibold">@item.Total.ToString("N0") ₫</td>
-                    </tr>
-                }
-                <tr class="bg-gray-100 font-semibold">
-                    <td colspan="4" class="text-right p-2 border">Tổng cộng:</td>
-                    <td class="text-red-600 p-2 border">@TotalAmount.ToString("N0") ₫</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <div class="card">
+        <div class="card-header">Chi tiết đơn hàng</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Hình ảnh</th>
+                            <th>Sản phẩm</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in CartItems)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    <img src="@($"https://localhost:7058/images/Products/{item.Image}")"
+                                         alt="@item.ProductName" width="60" class="img-thumbnail" />
+                                </td>
+                                <td>@item.ProductName</td>
+                                <td class="text-end">@item.UnitPrice.ToString("N0") ₫</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end">@item.Total.ToString("N0") ₫</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end fw-bold">Tổng cộng:</td>
+                            <td class="text-end fw-bold text-danger">@TotalAmount.ToString("N0") ₫</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
-    <div class="text-right">
-        <button @onclick="NavigateToCart" class="btn btn-secondary me-2">
-            Trở về giỏ hàng
-        </button>
-
-        <button @onclick="SubmitOrder" class="btn btn-primary">
-            Thanh toán bằng VNPay
-        </button>
+            <div class="d-flex justify-content-end mt-3">
+                <button @onclick="NavigateToCart" class="btn btn-secondary me-2">
+                    <i class="bi bi-arrow-left me-1"></i> Trở về giỏ hàng
+                </button>
+                <button @onclick="SubmitOrder" class="btn btn-primary">
+                    Thanh toán bằng VNPay <i class="bi bi-credit-card ms-1"></i>
+                </button>
+            </div>
+        </div>
     </div>
 }
 

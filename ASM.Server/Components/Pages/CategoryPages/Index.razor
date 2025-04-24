@@ -6,12 +6,10 @@
 @inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
 @attribute [Authorize]
 
-<PageTitle>Index</PageTitle>
-
-<h1>Index</h1>
+<PageTitle>Danh mục</PageTitle>
 
 <p>
-    <a href="categories/create">Create New</a>
+    <a href="categories/create">Thêm mới</a>
 </p>
 
 <QuickGrid Class="table" Items="context.Categories">
@@ -24,9 +22,9 @@
     </TemplateColumn>
 
     <TemplateColumn Context="category">
-        <a href="@($"categories/edit?categoryid={category.CategoryId}")">Edit</a> |
-        <a href="@($"categories/details?categoryid={category.CategoryId}")">Details</a> |
-        <a href="@($"categories/delete?categoryid={category.CategoryId}")">Delete</a>
+        <a href="@($"categories/edit?categoryid={category.CategoryId}")">Sửa</a> |
+        <a href="@($"categories/details?categoryid={category.CategoryId}")">Chi tiết</a> |
+        <a href="@($"categories/delete?categoryid={category.CategoryId}")">Xóa</a>
     </TemplateColumn>
 </QuickGrid>
 

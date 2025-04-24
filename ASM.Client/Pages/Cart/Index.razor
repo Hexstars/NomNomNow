@@ -4,71 +4,87 @@
 @inject IConfiguration config
 @inject IJSRuntime JSRuntime
 @inject HttpClient _http
-<h1>GIỎ HÀNG</h1>
+
+<PageTitle>Giỏ hàng</PageTitle>
+
+<h2 class="mb-4">Giỏ hàng của bạn</h2>
 
 @if (cartItems.Any())
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Hình ảnh</th>
-                <th>Tên sản phẩm</th>
-                <th>Đơn giá</th>
-                <th>Số lượng</th>
-                <th>Tổng cộng</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in cartItems)
-            {
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
                 <tr>
-                    <td><img src="@($"https://localhost:7058/images/Products/{item.Image}")" width="100px" /></td>
-                    <td>@item.ProductName</td>
-                    <td>@item.UnitPrice.ToString("N0") ₫</td>
-                    <td>
-                        <div class="input-group" style="width: 150px;">
-                            <button class="btn btn-outline-secondary"
-                                    @onclick="(() => UpdateQuantity(item.ProductId, item.Quantity - 1))"
-                                    disabled="@(item.Quantity <= 1)">
-                                -
-                            </button>
-
-                            <input type="number" class="form-control text-center"
-                                   value="@item.Quantity"
-                                   min="1" max="10"
-                                   oninput="@((ChangeEventArgs e) => HandleInput(item, e))" />
-
-                            <button class="btn btn-outline-secondary"
-                                    @onclick="(() => UpdateQuantity(item.ProductId, item.Quantity + 1))"
-                                    disabled="@(item.Quantity >= 10)">
-                                +
-                            </button>
-                        </div>
-                    </td>
-                    <td>@((item.UnitPrice * item.Quantity).ToString("N0", new System.Globalization.CultureInfo("vi-VN"))) ₫</td>
-                    <td>
-                        <button class="btn btn-danger" @onclick="(() => RemoveFromCart(item.ProductId))">Xóa</button>
-                        <button class="btn btn-primary ms-2" @onclick="(() => ViewDetails(item.ProductId))">Chi tiết</button>
-                    </td>
+                    <th class="text-center">Hình ảnh</th>
+                    <th>Sản phẩm</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Thành tiền</th>
+                    <th></th>
                 </tr>
-            }
-            <tr>
-                <td colspan="4" class="text-end"><h4>Thành tiền:</h4></td>
-                <td><h4>@grandTotal.ToString("N0") ₫</h4></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="text-end">
-        <button class="btn btn-primary btn-lg" @onclick="CreateOrder">Đặt hàng</button>
+            </thead>
+            <tbody>
+                @foreach (var item in cartItems)
+                {
+                    <tr>
+                        <td class="text-center">
+                            <img src="@($"https://localhost:7058/images/Products/{item.Image}")"
+                                 width="60"
+                                 class="img-thumbnail" />
+                        </td>
+                        <td>@item.ProductName</td>
+                        <td class="text-end">@item.UnitPrice.ToString("N0") ₫</td>
+                        <td class="text-center">
+                            <div class="input-group input-group-sm mx-auto" style="max-width: 120px;">
+                                <button class="btn btn-outline-secondary"
+                                        @onclick="(() => UpdateQuantity(item.ProductId, item.Quantity - 1))"
+                                        disabled="@(item.Quantity <= 1)">
+                                    -
+                                </button>
+                                <input type="number"
+                                       class="form-control text-center"
+                                       value="@item.Quantity"
+                                       min="1"
+                                       max="10"
+                                       oninput="@((ChangeEventArgs e) => HandleInput(item, e))" />
+                                <button class="btn btn-outline-secondary"
+                                        @onclick="(() => UpdateQuantity(item.ProductId, item.Quantity + 1))"
+                                        disabled="@(item.Quantity >= 10)">
+                                    +
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-end fw-bold">@((item.UnitPrice * item.Quantity).ToString("N0", new System.Globalization.CultureInfo("vi-VN"))) ₫</td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="(() => RemoveFromCart(item.ProductId))">Xóa</button>
+                                <button class="btn btn-sm btn-outline-primary" @onclick="(() => ViewDetails(item.ProductId))">Chi tiết</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-end fw-bold">Tổng cộng:</td>
+                    <td class="text-end fw-bold text-danger">@grandTotal.ToString("N0") ₫</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-end">
+                        <button class="btn btn-primary btn-lg" @onclick="CreateOrder">Tiến hành đặt hàng <i class="bi bi-arrow-right ms-1"></i></button>
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
     </div>
 }
 else
 {
-    <div class="alert alert-info text-center">
-        Giỏ hàng đang trống
+    <div class="alert alert-info text-center py-4">
+        <h4>Giỏ hàng đang trống</h4>
+        <a href="/" class="btn btn-outline-primary mt-2">Tiếp tục mua sắm</a>
     </div>
 }
 

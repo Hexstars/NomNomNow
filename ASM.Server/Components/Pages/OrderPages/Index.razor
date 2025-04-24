@@ -1,0 +1,47 @@
+﻿@page "/orders"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using ASM.Share.Models
+@using ASM.Share.Models
+@implements IAsyncDisposable
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+
+<PageTitle>Đơn hàng</PageTitle>
+
+<QuickGrid Class="table" Items="context.Orders">
+    <PropertyColumn Property="order => order.AccountId" Title="Mã người dùng" />
+    <PropertyColumn Property="order => order.OrderDate" Title="Ngày đặt" Format="dd/MM/yyyy HH:mm:ss" />
+    <PropertyColumn Property="order => order.Phone" Title="Số điện thoại" />
+    <PropertyColumn Property="order => order.Address" Title="Địa chỉ" />
+    <TemplateColumn Title="Trạng thái" Context="order">
+        @GetOrderStatusName(order.Status)
+    </TemplateColumn>
+
+    <TemplateColumn Context="order">
+        <a href="@($"orders/edit/{order.OrderId}")">Sửa</a> | 
+        <a href="@($"orders/details?orderid={order.OrderId}")">Chi tiết</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    private string GetOrderStatusName(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "Chờ xử lý",
+            OrderStatus.InProgress => "Đang giao hàng",
+            OrderStatus.Completed => "Đã giao hàng",
+            OrderStatus.Cancelled => "Đã hủy",
+            _ => status.ToString() // Fallback
+        };
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

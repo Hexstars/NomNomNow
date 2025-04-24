@@ -3,74 +3,14 @@
 @inherits LayoutComponentBase
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
-<style>
-    /* Ensure the main content is not overlapped by the fixed navbar */
-    .main-content {
-        padding-top: 70px; /* Adjust based on your navbar height */
-    }
-
-    /* Optional: Add some styling to the navbar */
-    .navbar-custom {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-    }
-
-    /* Center the search form in the navbar */
-    .navbar-search-container {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100%;
-        max-width: 500px; /* Limit the width of the search input */
-        display: flex;
-        justify-content: center;
-    }
-
-    .navbar-search {
-        width: 100%;
-        max-width: 400px; /* Adjust the width of the search input */
-    }
-
-        .navbar-search .form-control {
-            background-color: #fff; /* White background */
-            border: 1px solid #ced4da; /* Default Bootstrap border */
-            border-radius: 0.25rem 0 0 0.25rem; /* Rounded corners on the left */
-        }
-
-            .navbar-search .form-control:focus {
-                background-color: #fff;
-                border-color: #007bff;
-                box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-            }
-
-        .navbar-search .btn {
-            background-color: #007bff;
-            border-color: #007bff;
-            border-radius: 0 0.25rem 0.25rem 0; /* Rounded corners on the right */
-        }
-
-            .navbar-search .btn:hover {
-                background-color: #0056b3;
-                border-color: #0056b3;
-            }
-
-    /* Ensure the left and right navbar items don’t overlap the search */
-    .navbar-nav-left {
-        margin-right: 20px; /* Space between left items and search */
-    }
-
-    .navbar-nav-right {
-        margin-left: 20px; /* Space between search and right items */
-    }
-</style>
 
 <!-- Fixed Horizontal Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top navbar-custom px-4">
-    <div class="container-fluid position-relative">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-4">
+    <div class="container-fluid">
         <!-- Brand and Left-aligned items -->
         <div class="d-flex align-items-center">
             <a class="navbar-brand" href="/">NomNomNow</a>
-            <!-- Toggler for mobile view -->
-            <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu" aria-controls="navbarNav" aria-expanded="@(!collapseNavMenu)" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu" aria-controls="navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
         </div>
@@ -78,7 +18,7 @@
         <!-- Navbar Items -->
         <div class="collapse navbar-collapse" id="navbarNav" style="@(collapseNavMenu ? "display: none;" : "")">
             <!-- Left-aligned items -->
-            <ul class="navbar-nav navbar-nav-left">
+            <ul class="navbar-nav me-auto">
                 <li class="nav-item">
                     <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Trang chủ</NavLink>
                 </li>
@@ -101,15 +41,13 @@
             </ul>
 
             <!-- Search Input (Centered) -->
-            <div class="navbar-search-container">
-                <form class="d-flex navbar-search" @onsubmit="HandleSearch">
-                    <input class="form-control me-0" required type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" @bind="searchQuery" />
-                    <button class="btn btn-primary" type="submit">Tìm</button>
-                </form>
-            </div>
+            <form class="d-flex mx-auto" style="max-width: 500px;" @onsubmit="HandleSearch">
+                <input class="form-control me-2" required type="search" placeholder="Tìm kiếm sản phẩm..." @bind="searchQuery" />
+                <button class="btn btn-primary" type="submit">Tìm</button>
+            </form>
 
             <!-- Right-aligned items -->
-            <ul class="navbar-nav navbar-nav-right ms-auto">
+            <ul class="navbar-nav ms-auto">
                 @if (isLoggedIn)
                 {
                     <li class="nav-item">
@@ -133,15 +71,34 @@
     </div>
 </nav>
 
-<!-- Main Content -->
-<div class="main-content">
-    <main>
-        <article class="content px-4 mx-6"><!-- Added mx-3 for left/right margins -->
-            @Body
-        </article>
+<!-- Main Content with proper spacing -->
+<div class="container-fluid mt-5 pt-4 px-4 min-vh-100"><!-- min-vh-100 ensures footer stays at bottom -->
+    <main class="px-3">
+        @Body
     </main>
 </div>
-
+<!-- Footer -->
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h5>NomNomNow</h5>
+                <p>Đồ ăn ngon - Giao hàng nhanh</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Liên hệ</h5>
+                <p>Email: contact@nomnomnow.com<br>Điện thoại: 0123 456 789</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Thời gian hoạt động</h5>
+                <p>Thứ 2 - Thứ 6: 8h - 22h<br>Thứ 7 - CN: 9h - 23h</p>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <p class="mb-0">&copy; 2025 NomNomNow. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 @code {
     private bool collapseNavMenu = true;
     private bool isLoggedIn = false;
@@ -152,51 +109,33 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Retrieve the JWT token from local storage
         var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
-
         isLoggedIn = !string.IsNullOrEmpty(token);
 
-        if (isLoggedIn && !string.IsNullOrEmpty(token))
+        if (isLoggedIn)
         {
             try
             {
-                // Parse the JWT token to extract claims
                 var handler = new JwtSecurityTokenHandler();
                 var jwtToken = handler.ReadJwtToken(token);
-
-                // Extract user details from the token claims
                 userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
                 userEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
                 userRole = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
             }
-            catch (Exception ex)
+            catch
             {
-                // Handle token parsing errors (e.g., invalid token)
-                Console.WriteLine($"Error parsing JWT token: {ex.Message}");
-                await Logout();  // Log out the user if the token is invalid
+                await Logout();
             }
         }
     }
 
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
 
     private async Task Logout()
     {
-        // Remove token from localStorage
         await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
-        
-        // Clear local state
         isLoggedIn = false;
-        userId = null;
-        userEmail = null;
-        userRole = null;
-        
-        // Redirect to home with force reload
-        NavigationManager.NavigateTo("/");
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 
     private void HandleSearch()

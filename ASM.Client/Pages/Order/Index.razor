@@ -5,8 +5,9 @@
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Config
 @inject NavigationManager NavigationManager
+<PageTitle>Đơn hàng của bạn</PageTitle>
 
-<h1 class="text-3xl font-bold mb-6">DANH SÁCH ĐƠN HÀNG</h1>
+<h2 class="mb-4">Đơn hàng của bạn</h2>
 
 @if (isLoading)
 {
@@ -14,65 +15,74 @@
 }
 else if (orders == null || !orders.Any())
 {
-    <p class="font-semibold text-center">Danh sách đơn hàng đang trống</p>
+    <div class="alert alert-info text-center py-4">
+        <h4>Chưa có đơn hàng nào</h4>
+        <a href="/" class="btn btn-outline-primary mt-2">Tiếp tục mua sắm</a>
+    </div>
 }
 else
 {
     @foreach (var order in orders)
     {
-        <div class="mb-8 border p-4 rounded-lg shadow-sm bg-white">
-            <h2 class="text-xl font-semibold">MÃ ĐƠN HÀNG: @order.OrderId</h2>
-            <p>NGÀY ĐẶT HÀNG: @order.OrderDate.ToString("dd/MM/yyyy HH:mm:ss tt")</p>
-            <p>TỔNG THÀNH TIỀN: @order.Total.ToString("N0") ₫</p>
-            @if (order.Status == OrderStatus.Cancelled)
-            {
-                <p>TRẠNG THÁI: <span class="text-red-600">@GetOrderStatusName(order.Status)</span></p>
-            }
-            else
-            {
-                <p>TRẠNG THÁI: @GetOrderStatusName(order.Status)</p>
-            }
-            <p>SỐ ĐIỆN THOẠI: @order.Phone</p>
-            <p>ĐỊA CHỈ NHẬN HÀNG: @order.Address</p>
-
-            <table class="table-auto w-full border-collapse border mt-4">
-                <thead class="bg-gray-100 text-center">
-                    <tr>
-                        <th class="p-2 border">TÊN SẢN PHẨM</th>
-                        <th class="p-2 border">HÌNH ẢNH</th>
-                        <th class="p-2 border">ĐƠN GIÁ</th>
-                        <th class="p-2 border">SỐ LƯỢNG</th>
-                        <th class="p-2 border">THÀNH TIỀN</th>
-                    </tr>
-                </thead>
-                <tbody class="text-center">
-                    @foreach (var product in order.Products)
-                    {
-                        <tr class="border-t">
-                            <td class="p-2 border">@product.ProductName</td>
-                            <td class="p-2 border">
-                                <img src="https://localhost:7058/images/Products/@product.Image"
-                                alt="@product.ProductName"
-                                style="width: 150px; height: auto; object-fit: contain; border-radius: 5px;" />
-                            </td>
-                            <td class="p-2 border">@product.UnitPrice.ToString("N0") ₫</td>
-                            <td class="p-2 border">@product.Quantity</td>
-                            <td class="p-2 border">@product.SubTotal.ToString("N0") ₫</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
-            @if (order.Status != OrderStatus.Cancelled)
-            {
-                <div class="flex justify-end mt-4">
-                    <button @onclick="() => CancelOrder(order.OrderId)" class="btn btn-danger">
-                        Hủy đơn hàng
-                    </button>
+        <div class="card mb-4">
+            <div class="card-header">
+                Đơn hàng #@order.OrderId - Đặt ngày @order.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                @if (order.Status == OrderStatus.Cancelled)
+                {
+                    <span class="badge bg-danger ms-2">Đã hủy</span>
+                }
+                else
+                {
+                    <span class="badge bg-info ms-2">@GetOrderStatusName(order.Status)</span>
+                }
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Hình ảnh</th>
+                                <th>Sản phẩm</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in order.Products)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        <img src="https://localhost:7058/images/Products/@product.Image"
+                                             alt="@product.ProductName" width="60" class="img-thumbnail" />
+                                    </td>
+                                    <td>@product.ProductName</td>
+                                    <td class="text-end">@product.UnitPrice.ToString("N0") ₫</td>
+                                    <td class="text-center">@product.Quantity</td>
+                                    <td class="text-end">@product.SubTotal.ToString("N0") ₫</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">Tổng cộng:</td>
+                                <td class="text-end fw-bold">@order.Total.ToString("N0") ₫</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">
+                                    <small class="text-muted">Địa chỉ giao hàng: @order.Address</small><br>
+                                    <small class="text-muted">Số điện thoại: @order.Phone</small>
+                                    @if (order.Status != OrderStatus.Cancelled)
+                                    {
+                                        <button @onclick="() => CancelOrder(order.OrderId)" class="btn btn-sm btn-outline-danger ms-2">Hủy đơn hàng</button>
+                                    }
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-            }
+            </div>
         </div>
-        <hr class="border-4 border-black my-8" />
     }
 }
 

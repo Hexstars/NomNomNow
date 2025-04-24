@@ -1,0 +1,54 @@
+﻿@page "/orders/details"
+@using Microsoft.EntityFrameworkCore
+@using ASM.Share.Models
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Order</h2>
+    <hr />
+    @if (order is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">AccountId</dt>
+            <dd class="col-sm-10">@order.AccountId</dd>
+            <dt class="col-sm-2">OrderDate</dt>
+            <dd class="col-sm-10">@order.OrderDate</dd>
+            <dt class="col-sm-2">Phone</dt>
+            <dd class="col-sm-10">@order.Phone</dd>
+            <dt class="col-sm-2">Address</dt>
+            <dd class="col-sm-10">@order.Address</dd>
+            <dt class="col-sm-2">Status</dt>
+            <dd class="col-sm-10">@order.Status</dd>
+        </dl>
+        <div>
+            <a href="@($"/orders/edit?orderid={order.OrderId}")">Edit</a> |
+            <a href="@($"/orders")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Order? order;
+
+    [SupplyParameterFromQuery]
+    private int OrderId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        order = await context.Orders.FirstOrDefaultAsync(m => m.OrderId == OrderId);
+
+        if (order is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

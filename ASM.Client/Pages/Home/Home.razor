@@ -2,57 +2,42 @@
 @using ASM.Share.Models.Requests
 @using ASM.Share.Models.Responses
 @inject HttpClient Http
-@inject Microsoft.Extensions.Configuration.IConfiguration config
+@inject Microsoft.Extensions.Configuration.IConfiguration Config
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Trang Chủ</PageTitle>
+<PageTitle>Trang chủ</PageTitle>
 
 <style>
-    .category-carousel .swiper-wrapper {
-        display: flex;
-        flex-direction: row;
+    .category-card, .product-card {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .category-carousel .swiper-slide {
-        width: 100% !important; /* Each slide takes the full width */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
+    .category-card:hover, .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
 
-    .category-carousel img {
-        width: 161px;
-        height: 161px;
-    }
-
-    .category-carousel .category-title {
-        margin-top: 1rem;
-        font-size: 1rem;
-        font-weight: normal;
-    }
-
-    .product-image {
-        height: 200px; /* hoặc 180px tuỳ kích thước bạn mong muốn */
-        object-fit: cover; /* Cắt ảnh cho vừa khung mà không méo */
+    .category-card img, .product-card img {
+        max-height: 180px;
+        object-fit: contain;
     }
 </style>
 
 <div class="homepage-content">
-    <section class="py-5 overflow-hidden">
-        <div class="container-lg">
+    <section class="py-5">
+        <div class="container">
             <div class="row">
-                <div class="col-md-12">
-                    <div class="section-header d-flex flex-wrap justify-content-between mb-5">
-                        <h2 class="section-title">DANH MỤC</h2>
-                        <div class="d-flex align-items-center">
-                            <a href="#" class="btn btn-primary me-2">Xem tất cả</a>
-                        </div>
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h3">DANH MỤC</h2>
+                        <a href="/categories" class="btn btn-primary">Xem tất cả</a>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-12">
                     @if (isLoading)
                     {
                         <div class="text-center">
@@ -72,19 +57,25 @@
                     }
                     else
                     {
-                        <div class="category-carousel swiper">
-                            <div class="swiper-wrapper">
-                                @foreach (var category in categories)
-                                {
-                                    <div class="swiper-slide">
-                                        <a class="nav-link text-center" style="text-decoration:none; cursor: pointer"
-                                           href="/products/category/@category.CategoryId">
-                                            <img src="https://localhost:7058/images/Categories/@category.Image" class="rounded-circle" alt="@category.CategoryName">
-                                            <h4 class="fs-6 mt-3 fw-normal category-title">@category.CategoryName</h4>
-                                        </a>
+                        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                            @foreach (var category in categories)
+                            {
+                                <div class="col">
+                                    <div class="card h-100 border-0 category-card">
+                                        <div class="d-flex justify-content-center align-items-center bg-light" style="height: 180px;">
+                                            <img src="@($"https://localhost:7058/images/Categories/{category.Image}")"
+                                                 class="img-fluid p-2"
+                                                 alt="@category.CategoryName" />
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title mb-1">@category.CategoryName</h6>
+                                            <a href="/products/category/@category.CategoryId"
+                                               class="btn btn-sm btn-outline-primary"
+                                               @onclick:stopPropagation>Xem tất cả</a>
+                                        </div>
                                     </div>
-                                }
-                            </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
@@ -93,53 +84,101 @@
     </section>
 
     <section class="pb-5">
-        <div class="container-lg">
+        <div class="container">
             <div class="row">
-                <div class="col-md-12">
-                    <div class="section-header d-flex flex-wrap justify-content-between my-4">
-                        <h2 class="section-title">SẢN PHẨM</h2>
-                        <div class="d-flex align-items-center">
-                            <a href="#" class="btn btn-primary rounded-1">Xem tất cả</a>
-                        </div>
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h3">SẢN PHẨM</h2>
+                        <a href="/products" class="btn btn-primary">Xem tất cả</a>
                     </div>
                 </div>
             </div>
-            @if (isLoading)
-            {
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            <div class="row">
+                @if (isLoading)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Đang tải sản phẩm...</p>
                     </div>
-                    <p>Đang tải sản phẩm...</p>
-                </div>
-            }
-            else if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <p class="text-danger">@errorMessage</p>
-            }
-            else if (products == null || !products.Any())
-            {
-                <p>Không có sản phẩm nào để hiển thị.</p>
-            }
-            else
-            {
-                <div class="row">
-                    @foreach (var product in products)
-                    {
-                        <div class="col-md-3 mb-4">
-                            <div class="card h-100" @onclick="() => ViewProductDetails(product.ProductId)" style="cursor: pointer;">
-                                <img src="https://localhost:7058/images/Products/@product.Image"
-                                     class="card-img-top product-image" alt="@product.ProductName" />
-                                <div class="card-body">
-                                    <h5 class="card-title">@product.ProductName</h5>
-                                    <p class="card-text">@product.UnitPrice.ToString("N0") ₫</p>
-                                    <a href="/product-details/@product.ProductId" class="btn btn-primary" @onclick:stopPropagation>Xem chi tiết</a>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <p class="text-danger">@errorMessage</p>
+                }
+                else if (products == null || !products.Any())
+                {
+                    <p>Không có sản phẩm nào để hiển thị.</p>
+                }
+                else
+                {
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                        @foreach (var product in PagedProducts)
+                        {
+                            <div class="col">
+                                <div class="card h-100 border-0 product-card" @onclick="() => ViewProductDetails(product.ProductId)">
+                                    <div class="d-flex justify-content-center align-items-center bg-light" style="height: 180px;">
+                                        <img src="@($"https://localhost:7058/images/Products/{product.Image}")"
+                                             class="img-fluid p-2"
+                                             alt="@product.ProductName" />
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title mb-1">@product.ProductName</h6>
+                                        <p class="text-muted mb-2">@product.UnitPrice.ToString("N0") ₫</p>
+                                        <a href="/product-details/@product.ProductId"
+                                           class="btn btn-sm btn-outline-primary"
+                                           @onclick:stopPropagation>Xem chi tiết</a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        }
+                    </div>
+                    @if (TotalPages > 1)
+                    {
+                        <nav class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(1)">«</button>
+                                </li>
+
+                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">‹</button>
+                                </li>
+
+                                @if (GetVisiblePageNumbers().First() > 1)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+
+                                @foreach (var pageNumber in GetVisiblePageNumbers())
+                                {
+                                    <li class="page-item @(pageNumber == currentPage ? "active" : "")">
+                                        <button class="page-link" @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                                    </li>
+                                }
+
+                                @if (GetVisiblePageNumbers().Last() < TotalPages)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+
+                                <li class="page-item @(currentPage == TotalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">›</button>
+                                </li>
+
+                                <li class="page-item @(currentPage == TotalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => GoToPage(TotalPages)">»</button>
+                                </li>
+                            </ul>
+                        </nav>
                     }
-                </div>
-            }
+                }
+            </div>
         </div>
     </section>
 </div>
@@ -152,26 +191,65 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadHomeData();
+    }
+    private int currentPage = 1;
+    private int pageSize = 4;
+
+    private IEnumerable<Product> PagedProducts =>
+        products?.Skip((currentPage - 1) * pageSize).Take(pageSize) ?? Enumerable.Empty<Product>();
+
+    private int TotalPages => products == null ? 0 : (int)Math.Ceiling((double)products.Count / pageSize);
+
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+        {
+            currentPage = page;
+        }
+    }
+
+    private List<int> GetVisiblePageNumbers()
+    {
+        var pages = new List<int>();
+        const int maxVisible = 5; // number of pages around current to show
+
+        int start = Math.Max(1, currentPage - 2);
+        int end = Math.Min(TotalPages, currentPage + 2);
+
+        for (int i = start; i <= end; i++)
+        {
+            pages.Add(i);
+        }
+
+        return pages;
+    }
+
+    private async Task LoadHomeData()
+    {
         try
         {
-            var apiUrl = config.GetSection("API")["APIUrl"].ToString();
-            isLoading = true;
-            errorMessage = null;
+            var apiUrl = Config["API:APIUrl"] ?? throw new InvalidOperationException("API URL is not configured");
+            var request = await CreateAuthRequest(HttpMethod.Get, $"{apiUrl}Home");
+            var response = await Http.SendAsync(request);
 
-            var homeData = await Http.GetFromJsonAsync<HomePage>(apiUrl + "Home");
-            if (homeData != null)
+            if (response.IsSuccessStatusCode)
             {
-                products = homeData.Products;
-                categories = homeData.Categories;
+                var homeData = await response.Content.ReadFromJsonAsync<HomePage>();
+                if (homeData != null)
+                {
+                    products = homeData.Products;
+                    categories = homeData.Categories;
+                }
+                else
+                {
+                    errorMessage = "Không có dữ liệu trả về từ API.";
+                }
             }
             else
             {
-                errorMessage = "Không có dữ liệu trả về từ API.";
+                errorMessage = $"Lỗi khi tải dữ liệu: {response.ReasonPhrase}";
             }
-        }
-        catch (HttpRequestException ex)
-        {
-            errorMessage = $"Lỗi khi tải dữ liệu: {ex.Message}";
         }
         catch (Exception ex)
         {
@@ -182,6 +260,20 @@
             isLoading = false;
         }
     }
+
+    private async Task<HttpRequestMessage> CreateAuthRequest(HttpMethod method, string url)
+    {
+        var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var request = new HttpRequestMessage(method, url);
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return request;
+    }
+
     private void ViewProductDetails(int productId)
     {
         NavigationManager.NavigateTo($"/product-details/{productId}");

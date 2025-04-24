@@ -1,0 +1,126 @@
+﻿@page "/orders/edit/{OrderId:int}"
+@using Microsoft.EntityFrameworkCore
+@using ASM.Share.Models
+@inject IDbContextFactory<ASM.Share.Models.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Order</h2>
+<hr />
+@if (Order is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Order" OnValidSubmit="UpdateOrder" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert" />
+                <input type="hidden" name="Order.OrderId" value="@Order.OrderId" />
+                <div class="mb-3">
+                    <label for="accountid" class="form-label">AccountId:</label>
+                    <InputNumber id="accountid" @bind-Value="Order.AccountId" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Order.AccountId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="orderdate" class="form-label">OrderDate:</label>
+                    <InputDate id="orderdate" @bind-Value="Order.OrderDate" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Order.OrderDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone:</label>
+                    <InputText id="phone" @bind-Value="Order.Phone" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Order.Phone" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address:</label>
+                    <InputText id="address" @bind-Value="Order.Address" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Order.Address" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status:</label>
+                    <InputSelect id="status" @bind-Value="OrderStatusAsString" class="form-select">
+                        @foreach (var status in Enum.GetValues(typeof(OrderStatus)))
+                        {
+                            <option value="@status.ToString()">@((OrderStatus)status).GetDisplayName()</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => OrderStatusAsString" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/orders">Back to List</a>
+</div>
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private Order? Order { get; set; }
+
+    private string OrderStatusAsString
+    {
+        get => Order?.Status.ToString();
+        set
+        {
+            if (Enum.TryParse<OrderStatus>(value, out var status))
+            {
+                if (Order != null)
+                {
+                    Order.Status = status;
+                }
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Order = await context.Orders.FirstOrDefaultAsync(m => m.OrderId == OrderId);
+
+        if (Order is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateOrder()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Order!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!OrderExists(Order!.OrderId))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/orders");
+    }
+
+    private bool OrderExists(int orderid)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Orders.Any(e => e.OrderId == orderid);
+    }
+}
